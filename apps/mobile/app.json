@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "City Boy Movement Canada",
+    "slug": "cbmc-mobile",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1a8000"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

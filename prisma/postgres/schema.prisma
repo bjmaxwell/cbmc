@@ -1,0 +1,241 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  PROVINCIAL_ADMIN
+  SECRETARY
+}
+
+enum ContentStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  PUBLISHED
+  CHANGES_REQUESTED
+  ARCHIVED
+}
+
+enum PageOwner {
+  NATIONAL
+  PROVINCE
+  SYSTEM
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  EMBED
+}
+
+enum MediaPlacement {
+  LEFT_WRAP
+  RIGHT_WRAP
+  CENTER
+  FULL_WIDTH
+  INLINE
+  SIDE_BY_SIDE
+}
+
+model User {
+  id              String        @id @default(cuid())
+  name            String
+  username        String?       @unique
+  email           String        @unique
+  passwordHash    String
+  role            AdminRole
+  provinceId      String?
+  canPublish      Boolean       @default(false)
+  mustChangePassword Boolean     @default(true)
+  isActive        Boolean       @default(true)
+  province        Province?     @relation(fields: [provinceId], references: [id])
+  createdArticles Article[]     @relation("ArticleAuthor")
+  approvals       Approval[]
+  auditLogs       AuditLog[]
+  uploadedImports MemberImport[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Province {
+  id         String      @id @default(cuid())
+  name       String      @unique
+  slug       String      @unique
+  isEnabled  Boolean     @default(true)
+  users      User[]
+  pages      Page[]
+  executives Executive[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Page {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  route       String
+  owner       PageOwner
+  isEnabled   Boolean       @default(true)
+  provinceId  String?
+  province    Province?     @relation(fields: [provinceId], references: [id])
+  sections    PageSection[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model PageSection {
+  id        String        @id @default(cuid())
+  pageId    String
+  title     String
+  body      String
+  sortOrder Int           @default(0)
+  status    ContentStatus @default(DRAFT)
+  page      Page          @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  media     Media[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model Executive {
+  id          String    @id @default(cuid())
+  name        String
+  title       String
+  bio         String?
+  email       String?
+  linkedinUrl String?
+  imageUrl    String?
+  provinceId  String?
+  province    Province? @relation(fields: [provinceId], references: [id])
+  isNational  Boolean   @default(false)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Article {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  excerpt     String?
+  body        String
+  status      ContentStatus @default(DRAFT)
+  authorId    String
+  publishedAt DateTime?
+  author      User          @relation("ArticleAuthor", fields: [authorId], references: [id])
+  media       Media[]
+  approvals   Approval[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Media {
+  id            String          @id @default(cuid())
+  type          MediaType
+  title         String
+  url           String
+  storageProvider String        @default("local")
+  objectKey     String?
+  mimeType      String?
+  sizeBytes     Int?
+  altText       String?
+  placement     MediaPlacement  @default(CENTER)
+  isProtected   Boolean         @default(true)
+  articleId     String?
+  pageSectionId String?
+  article       Article?        @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  pageSection   PageSection?    @relation(fields: [pageSectionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model Member {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String?  @unique
+  phone       String?
+  province    String?
+  city        String?
+  status      String   @default("ACTIVE")
+  source      String   @default("MANUAL")
+  externalSource String?
+  externalId     String?
+  joinedAt    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([externalSource, externalId])
+}
+
+model MemberImport {
+  id           String   @id @default(cuid())
+  fileName     String
+  status       String   @default("UPLOADED")
+  totalRows    Int      @default(0)
+  createdRows  Int      @default(0)
+  updatedRows  Int      @default(0)
+  rejectedRows Int      @default(0)
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Approval {
+  id         String        @id @default(cuid())
+  status     ContentStatus
+  notes      String?
+  articleId  String?
+  reviewerId String
+  article    Article?      @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  reviewer   User          @relation(fields: [reviewerId], references: [id])
+  createdAt  DateTime      @default(now())
+}
+
+model ApiConnection {
+  id          String   @id @default(cuid())
+  name        String
+  endpoint    String
+  tokenName   String?
+  tokenSecret String?
+  isEnabled   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AnalyticsMetric {
+  id          String   @id @default(cuid())
+  scope       String
+  label       String
+  value       Float
+  unit        String?
+  description String?
+  recordedAt  DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  actor     User     @relation(fields: [actorId], references: [id])
+  createdAt DateTime @default(now())
+}

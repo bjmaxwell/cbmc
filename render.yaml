@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: cbmc-preview
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build && npx prisma db push --schema prisma/postgres/schema.prisma
+    startCommand: npm run api
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: API_PORT
+        value: 10000
+      - key: VITE_PREVIEW_GATE_ENABLED
+        value: true
+      - key: VITE_PREVIEW_ACCESS_CODES
+        value: cbmc-review-2026
+      - key: DATABASE_URL
+        sync: false
