@@ -38,23 +38,38 @@ async function main() {
   const results = [];
 
   for (const admin of admins) {
-    const password = generatePassword();
-
-    const user = await prisma.user.upsert({
+    const existing = await prisma.user.findUnique({
       where: { username: admin.username },
-      update: {
+    });
+
+    if (existing) {
+      const user = await prisma.user.update({
+        where: { username: admin.username },
+        data: {
+          name: admin.name,
+          email: admin.email,
+          role: admin.role,
+          canPublish: admin.canPublish,
+          isActive: true,
+        },
+      });
+
+      results.push({
+        name: user.name,
+        username: user.username,
+        role: user.role,
+        temporaryPassword: 'existing password preserved',
+        mustChangePassword: user.mustChangePassword,
+      });
+      continue;
+    }
+
+    const password = generatePassword();
+    const user = await prisma.user.create({
+      data: {
         name: admin.name,
         email: admin.email,
-        passwordHash: hashPassword(password),
-        role: admin.role,
-        canPublish: admin.canPublish,
-        mustChangePassword: true,
-        isActive: true,
-      },
-      create: {
-        name: admin.name,
         username: admin.username,
-        email: admin.email,
         passwordHash: hashPassword(password),
         role: admin.role,
         canPublish: admin.canPublish,

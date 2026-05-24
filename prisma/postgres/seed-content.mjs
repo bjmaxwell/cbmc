@@ -33,19 +33,11 @@ const executives = [
 ];
 
 async function upsertHero(pageId, headline, body) {
-  await prisma.pageSection.deleteMany({
-    where: { pageId, title: 'hero' },
-  });
-
   const existing = await prisma.pageSection.findFirst({
     where: { pageId, sortOrder: 0 },
   });
 
   if (existing) {
-    await prisma.pageSection.update({
-      where: { id: existing.id },
-      data: { title: headline, body, status: 'PUBLISHED' },
-    });
     return;
   }
 
@@ -64,7 +56,7 @@ async function main() {
   for (const [slug, title, route, headline, body] of pages) {
     const page = await prisma.page.upsert({
       where: { slug },
-      update: { title, route, owner: slug === 'analytics' ? 'SYSTEM' : slug === 'provinces' ? 'PROVINCE' : 'NATIONAL', isEnabled: true },
+      update: { title, route, owner: slug === 'analytics' ? 'SYSTEM' : slug === 'provinces' ? 'PROVINCE' : 'NATIONAL' },
       create: { slug, title, route, owner: slug === 'analytics' ? 'SYSTEM' : slug === 'provinces' ? 'PROVINCE' : 'NATIONAL', isEnabled: true },
     });
     await upsertHero(page.id, headline, body);
@@ -79,10 +71,7 @@ async function main() {
 
     const existing = await prisma.executive.findFirst({ where: { email } });
     if (existing) {
-      await prisma.executive.update({
-        where: { id: existing.id },
-        data: { name, title, provinceId: province.id, bio, email, isNational: true, sortOrder: index },
-      });
+      continue;
     } else {
       await prisma.executive.create({
         data: { name, title, provinceId: province.id, bio, email, isNational: true, sortOrder: index },

@@ -3,7 +3,7 @@ services:
     name: cbmc-preview
     env: node
     plan: free
-    buildCommand: npm install && npm run build && npx prisma db push --schema prisma/postgres/schema.prisma
+    buildCommand: npm install && npx prisma db push --schema prisma/postgres/schema.prisma && npm run db:seed:content && npm run db:seed:admins && npm run build
     startCommand: npm run api
     envVars:
       - key: NODE_VERSION
