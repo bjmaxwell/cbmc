@@ -8,8 +8,6 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22
-      - key: API_PORT
-        value: 10000
       - key: VITE_PREVIEW_GATE_ENABLED
         value: true
       - key: VITE_PREVIEW_ACCESS_CODES

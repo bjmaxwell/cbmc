@@ -4,7 +4,8 @@ import { extname, join } from 'node:path';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-const port = Number(process.env.API_PORT || 4000);
+const port = Number(process.env.PORT || process.env.API_PORT || 4000);
+const host = process.env.HOST || '0.0.0.0';
 const uploadDir = join(process.cwd(), 'public', 'uploads');
 const distDir = join(process.cwd(), 'dist');
 
@@ -343,6 +344,6 @@ const server = createServer(async (req, res) => {
   }
 });
 
-server.listen(port, '127.0.0.1', () => {
-  console.log(`CBMC API listening on http://127.0.0.1:${port}`);
+server.listen(port, host, () => {
+  console.log(`CBMC API listening on http://${host}:${port}`);
 });
