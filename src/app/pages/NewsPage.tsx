@@ -47,7 +47,7 @@ export default function NewsPage() {
     {
       id: 4,
       title: 'Member Spotlight: From Mentee to Mentor',
-      excerpt: "Meet David Chen, who joined CBM as a student and now leads our BC chapter's mentorship program, impacting hundreds of young Canadians.",
+      excerpt: "Meet Tosin Adeda, whose youth leadership work is helping CBM Canada connect students, young professionals, and community volunteers.",
       category: 'Success Stories',
       date: '2026-04-20',
       author: 'Editorial Team',

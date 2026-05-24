@@ -15,19 +15,40 @@ type Executive = {
 };
 
 const fallbackExecutives: Executive[] = [
-  ['1', 'Michael Thompson', 'National President', 'Ontario', 'Leading CBM Canada with vision and dedication to community excellence.', 'president@cityboymovement.ca'],
-  ['2', 'David Chen', 'Vice President', 'British Columbia', 'Driving strategic initiatives and membership growth across Canada.', 'vp@cityboymovement.ca'],
-  ['3', 'Emmanuel Okafor', 'General Secretary', 'Alberta', 'Managing organizational operations and communications.', 'secretary@cityboymovement.ca'],
-  ['4', 'James Wilson', 'Financial Secretary', 'Ontario', 'Ensuring financial transparency and accountability.', 'finance@cityboymovement.ca'],
-  ['5', 'Robert Martinez', 'Director of Programs', 'Quebec', 'Coordinating community programs and special projects.', 'programs@cityboymovement.ca'],
-  ['6', 'Christopher Lee', 'Director of Communications', 'Manitoba', 'Managing media relations and public outreach.', 'communications@cityboymovement.ca'],
-  ['7', 'Daniel Brown', 'Director of Events', 'Saskatchewan', 'Planning and executing memorable community events.', 'events@cityboymovement.ca'],
-  ['8', 'Andrew Taylor', 'Director of Membership', 'Nova Scotia', 'Building and nurturing our membership community.', 'membership@cityboymovement.ca'],
-  ['9', 'Matthew Anderson', 'Youth Coordinator', 'New Brunswick', 'Empowering young Canadians through mentorship programs.', 'youth@cityboymovement.ca'],
-  ['10', 'Joshua Thomas', 'Technology Director', 'Alberta', 'Driving digital innovation and technological advancement.', 'tech@cityboymovement.ca'],
-  ['11', 'Ryan Jackson', 'Public Relations Officer', 'Ontario', 'Building positive relationships with stakeholders and media.', 'pr@cityboymovement.ca'],
-  ['12', 'Kevin White', 'Social Impact Director', 'British Columbia', 'Leading community service and social impact initiatives.', 'impact@cityboymovement.ca'],
-].map(([id, name, position, province, bio, email]) => ({ id, name, position, province, bio, email, linkedinUrl: '', imageUrl: '' }));
+  {
+    id: '1',
+    name: 'Adebayo Adedosu',
+    position: 'Country Director',
+    province: '',
+    bio: 'Leading CBM Canada with vision and dedication to community excellence.',
+    email: 'adebayo.adedosu@cityboymovementcanada.org',
+    linkedinUrl: '',
+    imageUrl: '/uploads/1779572252381-img-20260115-wa0166.jpg',
+  },
+  { id: '2', name: 'Tolulope Awogbemi', position: 'Deputy Country Director', province: '', bio: 'Leading CBM Canada with vision and dedication to community excellence.', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '3', name: 'Sheyi Akinwale', position: 'General Secretary', province: '', bio: 'Driving strategic initiatives and membership growth across Canada.', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '4', name: 'Afoluke Juwape', position: 'Assistant Secretary', province: '', bio: 'Managing organizational operations and communications.', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '5', name: 'Ibraheem Haruna', position: 'Strategy and Planning', province: '', bio: 'Ensuring financial transparency and accountability.', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '6', name: 'Tosin Adeda', position: 'Youth Leader', province: '', bio: 'Coordinating community programs and special projects.', email: '', linkedinUrl: '', imageUrl: '/uploads/1779571933087-fb_img_1779571781439.jpg' },
+  { id: '7', name: 'Lotanna Dennis', position: "Students' Community Contact Lead", province: '', bio: 'Managing media relations and public outreach.', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '8', name: 'Aishat Aliyu Adeleke', position: 'Women Leader', province: '', bio: 'Planning and executing memorable community events.', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '9', name: 'Ifeoluwa Leo-Olagbaye', position: 'Assistant Woman Leader', province: '', bio: 'Building and nurturing our membership community.', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '10', name: 'Jide Adeyemi', position: 'Contact and Mobilization Officer', province: '', bio: 'Empowering young Canadians through mentorship programs.', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '11', name: 'Engr. Abdul Rafiu Badru', position: 'Director, Local Canvassing', province: '', bio: 'Driving digital innovation and technological advancement.', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '12', name: 'Babawale Lookman', position: 'Assistant Director, Local Canvassing', province: '', bio: 'Building positive relationships with stakeholders and media.', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '13', name: 'Bola Oduyale', position: 'Director, Finance', province: '', bio: 'Leading community service and social impact initiatives.', email: 'finance@cityboymovementcanada.org', linkedinUrl: '', imageUrl: '' },
+  { id: '14', name: 'Dolapo Conteh', position: 'Treasurer', province: '', bio: '', email: 'finance@cityboymovementcanada.org', linkedinUrl: '', imageUrl: '/uploads/1779572703057-conteh.jpeg' },
+  { id: '15', name: 'Gideon Adedokun', position: 'Welfare and Logistics', province: '', bio: '', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '16', name: 'BJ', position: 'Director, IT and Projects', province: '', bio: '', email: 'admin@cityboymovementcanada.org', linkedinUrl: '', imageUrl: '' },
+  { id: '17', name: 'Wale Balogun', position: 'Director, Membership Data', province: '', bio: '', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '18', name: 'Bolatito Adebola', position: 'Director, Information & Media Relations', province: '', bio: '', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '19', name: 'Risikat Bello', position: 'Director, Digital Media Communication', province: '', bio: '', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '20', name: 'George Chima', position: 'Director, Event Planning & Management', province: '', bio: '', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '21', name: 'Adetokunbo Adediran', position: 'Director, Program Research', province: '', bio: '', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '22', name: 'Kunle Ogundijo', position: 'Director, Fundraising', province: '', bio: '', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '23', name: 'Wale Rabiu', position: 'Director, Sponsorship', province: '', bio: '', email: '', linkedinUrl: '', imageUrl: '' },
+  { id: '24', name: 'Adewale Donald', position: 'Liaison, Nigeria Entertainment Group', province: '', bio: '', email: '', linkedinUrl: '', imageUrl: '' },
+];
 
 export default function ExecutivesPage() {
   const page = useCmsPage('executives', {

@@ -17,19 +17,67 @@ const pages = [
   ['contact', 'Contact', '/contact', 'Get In Touch', 'Contact City Boy Movement Canada and connect with the right team.'],
 ];
 
+const placeholderExecutiveNames = [
+  'Michael Thompson',
+  'David Chen',
+  'Emmanuel Okafor',
+  'James Wilson',
+  'Robert Martinez',
+  'Christopher Lee',
+  'Daniel Brown',
+  'Andrew Taylor',
+  'Matthew Anderson',
+  'Joshua Thomas',
+  'Ryan Jackson',
+  'Kevin White',
+];
+
 const executives = [
-  ['Michael Thompson', 'National President', 'Ontario', 'Leading CBM Canada with vision and dedication to community excellence.', 'president@cityboymovement.ca'],
-  ['David Chen', 'Vice President', 'British Columbia', 'Driving strategic initiatives and membership growth across Canada.', 'vp@cityboymovement.ca'],
-  ['Emmanuel Okafor', 'General Secretary', 'Alberta', 'Managing organizational operations and communications.', 'secretary@cityboymovement.ca'],
-  ['James Wilson', 'Financial Secretary', 'Ontario', 'Ensuring financial transparency and accountability.', 'finance@cityboymovement.ca'],
-  ['Robert Martinez', 'Director of Programs', 'Quebec', 'Coordinating community programs and special projects.', 'programs@cityboymovement.ca'],
-  ['Christopher Lee', 'Director of Communications', 'Manitoba', 'Managing media relations and public outreach.', 'communications@cityboymovement.ca'],
-  ['Daniel Brown', 'Director of Events', 'Saskatchewan', 'Planning and executing memorable community events.', 'events@cityboymovement.ca'],
-  ['Andrew Taylor', 'Director of Membership', 'Nova Scotia', 'Building and nurturing our membership community.', 'membership@cityboymovement.ca'],
-  ['Matthew Anderson', 'Youth Coordinator', 'New Brunswick', 'Empowering young Canadians through mentorship programs.', 'youth@cityboymovement.ca'],
-  ['Joshua Thomas', 'Technology Director', 'Alberta', 'Driving digital innovation and technological advancement.', 'tech@cityboymovement.ca'],
-  ['Ryan Jackson', 'Public Relations Officer', 'Ontario', 'Building positive relationships with stakeholders and media.', 'pr@cityboymovement.ca'],
-  ['Kevin White', 'Social Impact Director', 'British Columbia', 'Leading community service and social impact initiatives.', 'impact@cityboymovement.ca'],
+  {
+    name: 'Adebayo Adedosu',
+    title: 'Country Director',
+    bio: 'Leading CBM Canada with vision and dedication to community excellence.',
+    email: 'adebayo.adedosu@cityboymovementcanada.org',
+    imageUrl: '/uploads/1779572252381-img-20260115-wa0166.jpg',
+  },
+  { name: 'Tolulope Awogbemi', title: 'Deputy Country Director', bio: 'Leading CBM Canada with vision and dedication to community excellence.' },
+  { name: 'Sheyi Akinwale', title: 'General Secretary', bio: 'Driving strategic initiatives and membership growth across Canada.' },
+  { name: 'Afoluke Juwape', title: 'Assistant Secretary', bio: 'Managing organizational operations and communications.' },
+  { name: 'Ibraheem Haruna', title: 'Strategy and Planning', bio: 'Ensuring financial transparency and accountability.' },
+  {
+    name: 'Tosin Adeda',
+    title: 'Youth Leader',
+    bio: 'Coordinating community programs and special projects.',
+    imageUrl: '/uploads/1779571933087-fb_img_1779571781439.jpg',
+  },
+  { name: 'Lotanna Dennis', title: "Students' Community Contact Lead", bio: 'Managing media relations and public outreach.' },
+  { name: 'Aishat Aliyu Adeleke', title: 'Women Leader', bio: 'Planning and executing memorable community events.' },
+  { name: 'Ifeoluwa Leo-Olagbaye', title: 'Assistant Woman Leader', bio: 'Building and nurturing our membership community.' },
+  { name: 'Jide Adeyemi', title: 'Contact and Mobilization Officer', bio: 'Empowering young Canadians through mentorship programs.' },
+  { name: 'Engr. Abdul Rafiu Badru', title: 'Director, Local Canvassing', bio: 'Driving digital innovation and technological advancement.' },
+  { name: 'Babawale Lookman', title: 'Assistant Director, Local Canvassing', bio: 'Building positive relationships with stakeholders and media.' },
+  {
+    name: 'Bola Oduyale',
+    title: 'Director, Finance',
+    bio: 'Leading community service and social impact initiatives.',
+    email: 'finance@cityboymovementcanada.org',
+  },
+  {
+    name: 'Dolapo Conteh',
+    title: 'Treasurer',
+    email: 'finance@cityboymovementcanada.org',
+    imageUrl: '/uploads/1779572703057-conteh.jpeg',
+  },
+  { name: 'Gideon Adedokun', title: 'Welfare and Logistics' },
+  { name: 'BJ', title: 'Director, IT and Projects', email: 'admin@cityboymovementcanada.org' },
+  { name: 'Wale Balogun', title: 'Director, Membership Data' },
+  { name: 'Bolatito Adebola', title: 'Director, Information & Media Relations' },
+  { name: 'Risikat Bello', title: 'Director, Digital Media Communication' },
+  { name: 'George Chima', title: 'Director, Event Planning & Management' },
+  { name: 'Adetokunbo Adediran', title: 'Director, Program Research' },
+  { name: 'Kunle Ogundijo', title: 'Director, Fundraising' },
+  { name: 'Wale Rabiu', title: 'Director, Sponsorship' },
+  { name: 'Adewale Donald', title: 'Liaison, Nigeria Entertainment Group' },
 ];
 
 async function upsertHero(pageId, headline, body) {
@@ -62,19 +110,28 @@ async function main() {
     await upsertHero(page.id, headline, body);
   }
 
-  for (const [index, [name, title, provinceName, bio, email]] of executives.entries()) {
-    const province = await prisma.province.upsert({
-      where: { name: provinceName },
-      update: {},
-      create: { name: provinceName, slug: provinceName.toLowerCase().replace(/[^a-z0-9]+/g, '-') },
-    });
+  await prisma.executive.deleteMany({
+    where: {
+      name: { in: placeholderExecutiveNames },
+    },
+  });
 
-    const existing = await prisma.executive.findFirst({ where: { email } });
+  for (const [index, executive] of executives.entries()) {
+    const existing = await prisma.executive.findFirst({ where: { name: executive.name } });
     if (existing) {
       continue;
     } else {
       await prisma.executive.create({
-        data: { name, title, provinceId: province.id, bio, email, isNational: true, sortOrder: index },
+        data: {
+          name: executive.name,
+          title: executive.title,
+          bio: executive.bio || '',
+          email: executive.email || '',
+          imageUrl: executive.imageUrl || '',
+          linkedinUrl: executive.linkedinUrl || '',
+          isNational: true,
+          sortOrder: index,
+        },
       });
     }
   }
