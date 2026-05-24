@@ -1319,10 +1319,14 @@ export default function AdminDashboard() {
                                   />
                                 </label>
                                 <label className="block">
-                                  <span className="block text-xs font-medium text-gray-700 mb-1">Full profile / biography shown on executive profile page</span>
+                                  <span className="block text-sm font-bold text-[#000000] mb-1">Executive profile details</span>
+                                  <span className="block text-xs text-gray-600 mb-2">
+                                    This is the full public biography shown when visitors open the executive profile page.
+                                  </span>
                                   <textarea
                                     value={executive.bio}
                                     onChange={(event) => updateExecutive(executive.id, 'bio', event.target.value)}
+                                    placeholder="Write the executive's full profile, leadership background, achievements, responsibilities, and public biography here."
                                     className="w-full min-h-36 border border-gray-300 px-3 py-2 rounded-sm"
                                   />
                                 </label>
@@ -1335,6 +1339,11 @@ export default function AdminDashboard() {
                                       <Linkedin className="w-4 h-4" />
                                     </span>
                                   </div>
+                                  {executive.id.startsWith('c') && (
+                                    <Link to={`/executives/${executive.id}`} className="text-sm text-[#20A7DB] hover:underline">
+                                      View profile
+                                    </Link>
+                                  )}
                                   <button
                                     onClick={() => saveExecutive(executive, index).catch((error) => setContentSaveMessage(error.message))}
                                     className="inline-flex items-center gap-2 bg-[#1a8000] text-white px-3 py-2 rounded-sm text-sm"

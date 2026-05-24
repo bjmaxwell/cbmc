@@ -83,9 +83,15 @@ const executives = [
     title: 'Country Director',
     bio: 'Leading CBM Canada with vision and dedication to community excellence.',
     email: 'adebayo.adedosu@cityboymovementcanada.org',
+    linkedinUrl: 'https://www.linkedin.com/in/ade-adedosu-95840220/',
     imageUrl: '/uploads/1779572252381-img-20260115-wa0166.jpg',
   },
-  { name: 'Tolulope Awogbemi', title: 'Deputy Country Director', bio: 'Leading CBM Canada with vision and dedication to community excellence.' },
+  {
+    name: 'Tolulope Awogbemi',
+    title: 'Deputy Country Director',
+    bio: 'Leading CBM Canada with vision and dedication to community excellence.',
+    linkedinUrl: 'https://www.linkedin.com/in/tolulope-awogbemi-b9743836/',
+  },
   { name: 'Sheyi Akinwale', title: 'General Secretary', bio: 'Driving strategic initiatives and membership growth across Canada.' },
   { name: 'Afoluke Juwape', title: 'Assistant Secretary', bio: 'Managing organizational operations and communications.' },
   { name: 'Ibraheem Haruna', title: 'Strategy and Planning', bio: 'Ensuring financial transparency and accountability.' },
@@ -93,13 +99,30 @@ const executives = [
     name: 'Tosin Adeda',
     title: 'Youth Leader',
     bio: 'Coordinating community programs and special projects.',
+    linkedinUrl: 'https://www.linkedin.com/in/oluwatosin-longe/',
     imageUrl: '/uploads/1779571933087-fb_img_1779571781439.jpg',
   },
   { name: 'Lotanna Dennis', title: "Students' Community Contact Lead", bio: 'Managing media relations and public outreach.' },
   { name: 'Aishat Aliyu Adeleke', title: 'Women Leader', bio: 'Planning and executing memorable community events.' },
-  { name: 'Ifeoluwa Leo-Olagbaye', title: 'Assistant Woman Leader', bio: 'Building and nurturing our membership community.' },
-  { name: 'Jide Adeyemi', title: 'Contact and Mobilization Officer', bio: 'Empowering young Canadians through mentorship programs.' },
-  { name: 'Engr. Abdul Rafiu Badru', title: 'Director, Local Canvassing', bio: 'Driving digital innovation and technological advancement.' },
+  {
+    name: 'Ifeoluwa Leo-Olagbaye',
+    title: 'Assistant Woman Leader',
+    bio: 'Building and nurturing our membership community.',
+    imageUrl: '/uploads/1779597419825-ife.jpeg',
+  },
+  {
+    name: 'Jide Adeyemi',
+    title: 'Contact and Mobilization Officer',
+    bio: 'Empowering young Canadians through mentorship programs.',
+    linkedinUrl: 'https://www.linkedin.com/in/jide-adeyemi-a1164717/',
+    imageUrl: '/uploads/1779596679859-jide_adeyemi_03.jpg',
+  },
+  {
+    name: 'Engr. Abdul Rafiu Badru',
+    title: 'Director, Local Canvassing',
+    bio: 'Driving digital innovation and technological advancement.',
+    linkedinUrl: 'https://www.linkedin.com/in/abdul-rafiu-badru-684b9513/',
+  },
   { name: 'Babawale Lookman', title: 'Assistant Director, Local Canvassing', bio: 'Building positive relationships with stakeholders and media.' },
   {
     name: 'Bola Oduyale',
@@ -111,11 +134,17 @@ const executives = [
     name: 'Dolapo Conteh',
     title: 'Treasurer',
     email: 'finance@cityboymovementcanada.org',
+    linkedinUrl: 'https://www.linkedin.com/in/dolapo-conteh-cfa-fcca-cpa-7970765/',
     imageUrl: '/uploads/1779572703057-conteh.jpeg',
   },
-  { name: 'Gideon Adedokun', title: 'Welfare and Logistics' },
+  {
+    name: 'Gideon Adedokun',
+    title: 'Welfare and Logistics',
+    linkedinUrl: 'https://www.linkedin.com/in/goadedokun/',
+    imageUrl: '/uploads/1779597430653-gideon.jpeg',
+  },
   { name: 'BJ', title: 'Director, IT and Projects', email: 'admin@cityboymovementcanada.org' },
-  { name: 'Wale Balogun', title: 'Director, Membership Data' },
+  { name: 'Wale Balogun', title: 'Director, Membership Data', linkedinUrl: 'https://www.linkedin.com/in/kazeemwalebalogun/' },
   { name: 'Bolatito Adebola', title: 'Director, Information & Media Relations' },
   { name: 'Risikat Bello', title: 'Director, Digital Media Communication' },
   { name: 'George Chima', title: 'Director, Event Planning & Management' },
@@ -217,7 +246,19 @@ async function main() {
   for (const [index, executive] of executives.entries()) {
     const existing = await prisma.executive.findFirst({ where: { name: executive.name } });
     if (existing) {
-      continue;
+      await prisma.executive.update({
+        where: { id: existing.id },
+        data: {
+          title: executive.title,
+          bio: executive.bio || '',
+          email: executive.email || '',
+          imageUrl: executive.imageUrl || '',
+          linkedinUrl: executive.linkedinUrl || '',
+          provinceId: null,
+          isNational: true,
+          sortOrder: index,
+        },
+      });
     } else {
       await prisma.executive.create({
         data: {
