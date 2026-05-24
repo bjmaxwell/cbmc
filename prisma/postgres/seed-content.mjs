@@ -17,6 +17,19 @@ const pages = [
   ['contact', 'Contact', '/contact', 'Get In Touch', 'Contact City Boy Movement Canada and connect with the right team.'],
 ];
 
+const provinces = [
+  ['Ontario', 'ontario'],
+  ['Alberta', 'alberta'],
+  ['British Columbia', 'british-columbia'],
+  ['Quebec', 'quebec'],
+  ['Manitoba', 'manitoba'],
+  ['Saskatchewan', 'saskatchewan'],
+  ['Nova Scotia', 'nova-scotia'],
+  ['New Brunswick', 'new-brunswick'],
+  ['Newfoundland And Labrador', 'newfoundland-and-labrador'],
+  ['Prince Edward Island', 'prince-edward-island'],
+];
+
 const placeholderExecutiveNames = [
   'Michael Thompson',
   'David Chen',
@@ -108,6 +121,33 @@ async function main() {
       create: { slug, title, route, owner: slug === 'analytics' ? 'SYSTEM' : slug === 'provinces' ? 'PROVINCE' : 'NATIONAL', isEnabled: true },
     });
     await upsertHero(page.id, headline, body);
+  }
+
+  for (const [name, slug] of provinces) {
+    const defaultMessage = `Welcome to the CBM ${name} chapter. Use the admin panel to replace this with the province coordinator's message.`;
+    const defaultActivities = `Summarize current ${name} outreach, membership, events, and community activities here.`;
+    const existing = await prisma.province.findUnique({ where: { slug } });
+
+    if (existing) {
+      await prisma.province.update({
+        where: { slug },
+        data: {
+          name,
+          message: existing.message || defaultMessage,
+          activities: existing.activities || defaultActivities,
+        },
+      });
+      continue;
+    }
+
+    await prisma.province.create({
+      data: {
+        name,
+        slug,
+        message: defaultMessage,
+        activities: defaultActivities,
+      },
+    });
   }
 
   await prisma.executive.deleteMany({

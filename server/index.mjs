@@ -61,6 +61,21 @@ function mapExecutive(executive) {
   };
 }
 
+function mapProvince(province) {
+  return {
+    id: province.id,
+    name: province.name,
+    slug: province.slug,
+    message: province.message || '',
+    activities: province.activities || '',
+    heroImageUrl: province.heroImageUrl || '',
+    activeMembers: province.activeMembers ?? 475,
+    annualEvents: province.annualEvents ?? 24,
+    localChapterCnt: province.localChapterCnt ?? 4,
+    isEnabled: province.isEnabled,
+  };
+}
+
 function cleanFileName(name) {
   return String(name || 'upload')
     .toLowerCase()
@@ -148,6 +163,46 @@ const server = createServer(async (req, res) => {
         include: { sections: { orderBy: { sortOrder: 'asc' } } },
       });
       send(res, 200, mapPage(updated));
+      return;
+    }
+
+    if (req.method === 'GET' && path === '/api/provinces') {
+      const provinces = await prisma.province.findMany({
+        orderBy: { name: 'asc' },
+      });
+      send(res, 200, provinces.map(mapProvince));
+      return;
+    }
+
+    if (req.method === 'GET' && path.startsWith('/api/provinces/')) {
+      const slug = decodeURIComponent(path.replace('/api/provinces/', ''));
+      const province = await prisma.province.findUnique({
+        where: { slug },
+      });
+      if (!province) {
+        send(res, 404, { error: 'Province not found' });
+        return;
+      }
+      send(res, 200, mapProvince(province));
+      return;
+    }
+
+    if (req.method === 'PUT' && path.startsWith('/api/provinces/')) {
+      const slug = decodeURIComponent(path.replace('/api/provinces/', ''));
+      const body = await readJson(req);
+      const province = await prisma.province.update({
+        where: { slug },
+        data: {
+          message: body.message || '',
+          activities: body.activities || '',
+          heroImageUrl: body.heroImageUrl || '',
+          activeMembers: Number.isFinite(Number(body.activeMembers)) ? Number(body.activeMembers) : null,
+          annualEvents: Number.isFinite(Number(body.annualEvents)) ? Number(body.annualEvents) : null,
+          localChapterCnt: Number.isFinite(Number(body.localChapterCnt)) ? Number(body.localChapterCnt) : null,
+          isEnabled: body.isEnabled !== false,
+        },
+      });
+      send(res, 200, mapProvince(province));
       return;
     }
 

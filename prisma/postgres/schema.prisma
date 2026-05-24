@@ -66,15 +66,21 @@ model User {
 }
 
 model Province {
-  id         String      @id @default(cuid())
-  name       String      @unique
-  slug       String      @unique
-  isEnabled  Boolean     @default(true)
-  users      User[]
-  pages      Page[]
-  executives Executive[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id              String      @id @default(cuid())
+  name            String      @unique
+  slug            String      @unique
+  message         String?
+  activities      String?
+  heroImageUrl    String?
+  activeMembers   Int?
+  annualEvents    Int?
+  localChapterCnt Int?
+  isEnabled       Boolean     @default(true)
+  users           User[]
+  pages           Page[]
+  executives      Executive[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
 
 model Page {

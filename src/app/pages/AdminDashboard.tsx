@@ -60,6 +60,43 @@ type LoginProfile = {
   mustChangePassword?: boolean;
 };
 
+type ProvinceDraft = {
+  id: string;
+  name: string;
+  slug: string;
+  message: string;
+  activities: string;
+  heroImageUrl: string;
+  activeMembers: number;
+  annualEvents: number;
+  localChapterCnt: number;
+  isEnabled: boolean;
+};
+
+const initialProvinceDrafts: ProvinceDraft[] = [
+  ['Ontario', 'ontario'],
+  ['Alberta', 'alberta'],
+  ['British Columbia', 'british-columbia'],
+  ['Quebec', 'quebec'],
+  ['Manitoba', 'manitoba'],
+  ['Saskatchewan', 'saskatchewan'],
+  ['Nova Scotia', 'nova-scotia'],
+  ['New Brunswick', 'new-brunswick'],
+  ['Newfoundland And Labrador', 'newfoundland-and-labrador'],
+  ['Prince Edward Island', 'prince-edward-island'],
+].map(([name, slug]) => ({
+  id: slug,
+  name,
+  slug,
+  message: `Welcome to the CBM ${name} chapter. Use this field for the provincial coordinator's message.`,
+  activities: `Summarize current ${name} outreach, membership, events, and community activities here.`,
+  heroImageUrl: '',
+  activeMembers: 475,
+  annualEvents: 24,
+  localChapterCnt: 4,
+  isEnabled: true,
+}));
+
 const initialCredentials: Record<string, LoginProfile> = {
   bjmaxwell: { name: 'Olu Maxwell', password: '3x3BHg-WpF_8A-ecwYrA', role: 'super-admin', mustChangePassword: true },
   badebayo: { name: 'Adebayo Adedosu', password: 'goO2mw-knIucg-UnUiMQ', role: 'admin', mustChangePassword: true },
@@ -343,6 +380,8 @@ export default function AdminDashboard() {
   const [counters, setCounters] = useState(() => editableCounters);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'admin' as AdminRole, province: '', photoUrl: '' });
   const [memberImportFile, setMemberImportFile] = useState('');
+  const [provinceDrafts, setProvinceDrafts] = useState<ProvinceDraft[]>(initialProvinceDrafts);
+  const [provinceSaveMessage, setProvinceSaveMessage] = useState('');
 
   const role = roleProfiles[activeRole];
   const canPublish = activeRole === 'super-admin' || (activeRole === 'admin' && adminPublishingEnabled);
@@ -388,6 +427,15 @@ export default function AdminDashboard() {
       .then((items) => {
         if (Array.isArray(items) && items.length > 0) {
           setExecutives(items);
+        }
+      })
+      .catch(() => undefined);
+
+    fetch('/api/provinces')
+      .then((response) => (response.ok ? response.json() : Promise.reject()))
+      .then((items) => {
+        if (Array.isArray(items) && items.length > 0) {
+          setProvinceDrafts(items);
         }
       })
       .catch(() => undefined);
@@ -474,6 +522,11 @@ export default function AdminDashboard() {
     setContentSaveMessage('');
   };
 
+  const updateProvinceDraft = (slug: string, field: keyof Omit<ProvinceDraft, 'id' | 'name' | 'slug'>, value: string | number | boolean) => {
+    setProvinceDrafts((items) => items.map((item) => (item.slug === slug ? { ...item, [field]: value } : item)));
+    setProvinceSaveMessage('');
+  };
+
   const addExecutive = () => {
     setExecutives((items) => [
       ...items,
@@ -533,6 +586,19 @@ export default function AdminDashboard() {
     const saved = await response.json();
     setExecutives((items) => items.map((item) => (item.id === executive.id ? saved : item)));
     setContentSaveMessage(`${saved.name} saved to Postgres.`);
+  };
+
+  const saveProvinceDraft = async (province: ProvinceDraft) => {
+    const response = await fetch(`/api/provinces/${province.slug}`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(province),
+    });
+
+    if (!response.ok) throw new Error('Unable to save province content');
+    const saved = await response.json();
+    setProvinceDrafts((items) => items.map((item) => (item.slug === saved.slug ? saved : item)));
+    setProvinceSaveMessage(`${saved.name} province page saved to Postgres.`);
   };
 
   const saveAllExecutives = async () => {
@@ -858,6 +924,100 @@ export default function AdminDashboard() {
                             Save Page
                           </button>
                           {contentSaveMessage && <p className="text-sm text-[#1a8000]">{contentSaveMessage}</p>}
+                        </div>
+                      </div>
+                    )}
+                    {editingPageId === 'provinces' && (
+                      <div className="bg-white border border-gray-200 rounded-sm overflow-hidden">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-5 border-b border-gray-200">
+                          <div>
+                            <h3 className="font-bold text-[#000000]">Province Page Messages</h3>
+                            <p className="text-sm text-gray-600">Edit the message, activities summary, hero image, and public counters for each provincial page.</p>
+                          </div>
+                          {provinceSaveMessage && <p className="text-sm text-[#1a8000]">{provinceSaveMessage}</p>}
+                        </div>
+                        <div className="divide-y divide-gray-200">
+                          {provinceDrafts.map((province) => (
+                            <div key={province.slug} className="p-5">
+                              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
+                                <div>
+                                  <h4 className="text-xl font-bold text-[#000000]">{province.name}</h4>
+                                  <Link to={`/provinces/${province.slug}`} className="text-sm text-[#20A7DB] hover:underline">
+                                    View public province page
+                                  </Link>
+                                </div>
+                                <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                                  <input
+                                    type="checkbox"
+                                    checked={province.isEnabled}
+                                    onChange={(event) => updateProvinceDraft(province.slug, 'isEnabled', event.target.checked)}
+                                  />
+                                  Enabled
+                                </label>
+                              </div>
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <label className="block">
+                                  <span className="block text-sm font-medium text-gray-700 mb-1">Province message</span>
+                                  <textarea
+                                    value={province.message}
+                                    onChange={(event) => updateProvinceDraft(province.slug, 'message', event.target.value)}
+                                    className="w-full min-h-32 border border-gray-300 px-3 py-2 rounded-sm"
+                                  />
+                                </label>
+                                <label className="block">
+                                  <span className="block text-sm font-medium text-gray-700 mb-1">Activities summary</span>
+                                  <textarea
+                                    value={province.activities}
+                                    onChange={(event) => updateProvinceDraft(province.slug, 'activities', event.target.value)}
+                                    className="w-full min-h-32 border border-gray-300 px-3 py-2 rounded-sm"
+                                  />
+                                </label>
+                                <label className="block lg:col-span-2">
+                                  <span className="block text-sm font-medium text-gray-700 mb-1">Hero image URL</span>
+                                  <input
+                                    value={province.heroImageUrl}
+                                    onChange={(event) => updateProvinceDraft(province.slug, 'heroImageUrl', event.target.value)}
+                                    className="w-full border border-gray-300 px-3 py-2 rounded-sm"
+                                    placeholder="/uploads/province-image.jpg or https://..."
+                                  />
+                                </label>
+                                <label className="block">
+                                  <span className="block text-sm font-medium text-gray-700 mb-1">Active members</span>
+                                  <input
+                                    type="number"
+                                    value={province.activeMembers}
+                                    onChange={(event) => updateProvinceDraft(province.slug, 'activeMembers', Number(event.target.value))}
+                                    className="w-full border border-gray-300 px-3 py-2 rounded-sm"
+                                  />
+                                </label>
+                                <label className="block">
+                                  <span className="block text-sm font-medium text-gray-700 mb-1">Local chapters</span>
+                                  <input
+                                    type="number"
+                                    value={province.localChapterCnt}
+                                    onChange={(event) => updateProvinceDraft(province.slug, 'localChapterCnt', Number(event.target.value))}
+                                    className="w-full border border-gray-300 px-3 py-2 rounded-sm"
+                                  />
+                                </label>
+                                <label className="block">
+                                  <span className="block text-sm font-medium text-gray-700 mb-1">Annual events</span>
+                                  <input
+                                    type="number"
+                                    value={province.annualEvents}
+                                    onChange={(event) => updateProvinceDraft(province.slug, 'annualEvents', Number(event.target.value))}
+                                    className="w-full border border-gray-300 px-3 py-2 rounded-sm"
+                                  />
+                                </label>
+                              </div>
+                              <button
+                                onClick={() => saveProvinceDraft(province).catch((error) => setProvinceSaveMessage(error.message))}
+                                className="inline-flex items-center gap-2 bg-[#1a8000] text-white px-4 py-2 rounded-sm text-sm mt-4"
+                              >
+                                <Save className="w-4 h-4" />
+                                Save {province.name}
+                              </button>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}

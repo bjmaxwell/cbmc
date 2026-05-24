@@ -1,9 +1,18 @@
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { MapPin, Users, Calendar, Mail, User } from 'lucide-react';
 import { useCmsPage } from '../hooks/useCmsPage';
 
 export default function ProvincialPage() {
   const { province } = useParams<{ province: string }>();
+  const [provinceContent, setProvinceContent] = useState<{
+    message: string;
+    activities: string;
+    heroImageUrl: string;
+    activeMembers: number;
+    annualEvents: number;
+    localChapterCnt: number;
+  } | null>(null);
   const page = useCmsPage('provinces', {
     title: 'Provincial Pages',
     headline: 'Provincial Chapters',
@@ -51,6 +60,24 @@ export default function ProvincialPage() {
   };
 
   const currentProvince = provinceData[provinceName || ''];
+
+  useEffect(() => {
+    if (!province) return;
+
+    let cancelled = false;
+    fetch(`/api/provinces/${province}`)
+      .then((response) => (response.ok ? response.json() : Promise.reject()))
+      .then((content) => {
+        if (!cancelled) setProvinceContent(content);
+      })
+      .catch(() => {
+        if (!cancelled) setProvinceContent(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [province]);
 
   // Mock data for provincial executives
   const provincialExecutives = [
@@ -107,10 +134,10 @@ export default function ProvincialPage() {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-[#1a8000] to-[#20A7DB] text-white py-32 md:py-40 overflow-hidden" style={{ borderBottom: '1px solid #000000' }}>
-        {currentProvince && (
+        {(provinceContent?.heroImageUrl || currentProvince) && (
           <div className="absolute inset-0">
             <img
-              src={currentProvince.image}
+              src={provinceContent?.heroImageUrl || currentProvince.image}
               alt={`${provinceName} landmark`}
               className="w-full h-full object-cover object-center"
               style={{ borderRadius: '0.5px' }}
@@ -123,8 +150,29 @@ export default function ProvincialPage() {
             <h1 className="text-4xl md:text-5xl font-bold">{provinceName ? `${provinceName} Chapter` : page.headline}</h1>
           </div>
           <p className="text-xl">
-            {provinceName ? `Connect with CBM members and chapters across ${provinceName}` : page.body}
+            {provinceContent?.message || (provinceName ? `Connect with CBM members and chapters across ${provinceName}` : page.body)}
           </p>
+        </div>
+      </section>
+
+      {/* Province Message */}
+      <section className="py-14 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] gap-8 items-start">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wide text-[#1a8000] mb-2">Chapter message</p>
+              <h2 className="text-3xl font-bold text-[#000000] mb-4">{provinceName} Chapter</h2>
+              <p className="text-gray-700 leading-7">
+                {provinceContent?.message || `The ${provinceName} chapter connects CBM members, volunteers, and community partners across the province.`}
+              </p>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 rounded-sm p-6">
+              <p className="text-sm font-semibold uppercase tracking-wide text-[#20A7DB] mb-2">Activities summary</p>
+              <p className="text-gray-700 leading-7 whitespace-pre-line">
+                {provinceContent?.activities || 'Activities summary has not been published yet.'}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -134,17 +182,17 @@ export default function ProvincialPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white p-6 rounded-sm shadow-md text-center">
               <Users className="w-12 h-12 text-[#1a8000] mx-auto mb-4" />
-              <h3 className="text-3xl font-bold text-[#000000] mb-2">475</h3>
+              <h3 className="text-3xl font-bold text-[#000000] mb-2">{provinceContent?.activeMembers ?? 475}</h3>
               <p className="text-gray-600">Active Members</p>
             </div>
             <div className="bg-white p-6 rounded-sm shadow-md text-center">
               <MapPin className="w-12 h-12 text-[#20A7DB] mx-auto mb-4" />
-              <h3 className="text-3xl font-bold text-[#000000] mb-2">{localChapters.length}</h3>
+              <h3 className="text-3xl font-bold text-[#000000] mb-2">{provinceContent?.localChapterCnt ?? localChapters.length}</h3>
               <p className="text-gray-600">Local Chapters</p>
             </div>
             <div className="bg-white p-6 rounded-sm shadow-md text-center">
               <Calendar className="w-12 h-12 text-[#1a8000] mx-auto mb-4" />
-              <h3 className="text-3xl font-bold text-[#000000] mb-2">24</h3>
+              <h3 className="text-3xl font-bold text-[#000000] mb-2">{provinceContent?.annualEvents ?? 24}</h3>
               <p className="text-gray-600">Annual Events</p>
             </div>
           </div>
