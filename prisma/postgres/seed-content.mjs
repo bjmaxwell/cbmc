@@ -45,7 +45,7 @@ const provinceExecutiveSeeds = {
       name: "'Jide Adeyemi",
       title: 'Provincial Coordinator',
       linkedinUrl: 'https://www.linkedin.com/in/jide-adeyemi-a1164717/',
-      imageUrl: '/uploads/1779595914164-jide_adeyemi_03.jpg',
+      imageUrl: '/uploads/1779596679859-jide_adeyemi_03.jpg',
     },
     { name: 'Leke Omole', title: 'Deputy Provincial Coordinator' },
     { name: 'Olumuyiwa opaleye', title: 'Zonal Coordinator - Edmonton' },
