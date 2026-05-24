@@ -30,6 +30,38 @@ const provinces = [
   ['Prince Edward Island', 'prince-edward-island'],
 ];
 
+const provinceContentSeeds = {
+  alberta: {
+    message:
+      'CBM Canada Alberta Chapter is a forward-looking provincial arm of the City Boy Movement Canada dedicated to fostering unity, leadership, and community impact among Nigerians in Alberta. The chapter provides a platform for professionals, entrepreneurs, students, and young leaders to engage in advocacy, mentorship, economic empowerment, cultural promotion, and grassroots engagement in Nigeria and abroad.',
+    activities:
+      'Through strategic programs, digital mobilization, networking opportunities, and community initiatives, CBM Alberta strengthens diaspora participation while promoting responsible leadership and national development. Focused on youth empowerment and entrepreneurship, the chapter is building a strong, organized community network positioned to drive lasting impact toward the 2027 vision and beyond.',
+  },
+};
+
+const provinceExecutiveSeeds = {
+  alberta: [
+    {
+      name: "'Jide Adeyemi",
+      title: 'Provincial Coordinator',
+      linkedinUrl: 'https://www.linkedin.com/in/jide-adeyemi-a1164717/',
+      imageUrl: '/uploads/1779595914164-jide_adeyemi_03.jpg',
+    },
+    { name: 'Leke Omole', title: 'Deputy Provincial Coordinator' },
+    { name: 'Olumuyiwa opaleye', title: 'Zonal Coordinator - Edmonton' },
+    { name: 'Saheed Ibrahim', title: 'Provincial Secretary' },
+    { name: 'Matthew Odusi', title: 'Assitant Provincial Secretary' },
+    { name: 'Prince Obinna Ikwuagu', title: 'Provincial Treasurer' },
+    { name: 'Olumide Chirs', title: 'Strategy & Planning Lead' },
+    { name: 'Edgar Ehanire', title: 'Media & COmmunications Lead' },
+    { name: 'Mayowa Adeniyi', title: 'IT & Data Management Lead' },
+    { name: 'Oguntoye Akinlolu', title: 'Youth & Students Leader' },
+    { name: 'Yadua Gabriel Idenaa', title: 'Provincial Financial Secretary' },
+    { name: 'Meg Okia', title: 'Women Leader' },
+    { name: 'Abisoye Bamigboye', title: 'Partnerships & Fundraising Lead' },
+  ],
+};
+
 const placeholderExecutiveNames = [
   'Michael Thompson',
   'David Chen',
@@ -126,6 +158,7 @@ async function main() {
   for (const [name, slug] of provinces) {
     const defaultMessage = `Welcome to the CBM ${name} chapter. Use the admin panel to replace this with the province coordinator's message.`;
     const defaultActivities = `Summarize current ${name} outreach, membership, events, and community activities here.`;
+    const contentSeed = provinceContentSeeds[slug];
     const existing = await prisma.province.findUnique({ where: { slug } });
 
     if (existing) {
@@ -133,8 +166,8 @@ async function main() {
         where: { slug },
         data: {
           name,
-          message: existing.message || defaultMessage,
-          activities: existing.activities || defaultActivities,
+          message: contentSeed?.message || existing.message || defaultMessage,
+          activities: contentSeed?.activities || existing.activities || defaultActivities,
         },
       });
       continue;
@@ -144,10 +177,35 @@ async function main() {
       data: {
         name,
         slug,
-        message: defaultMessage,
-        activities: defaultActivities,
+        message: contentSeed?.message || defaultMessage,
+        activities: contentSeed?.activities || defaultActivities,
       },
     });
+  }
+
+  for (const [slug, executives] of Object.entries(provinceExecutiveSeeds)) {
+    const province = await prisma.province.findUnique({ where: { slug } });
+    if (!province) continue;
+
+    await prisma.executive.deleteMany({
+      where: { provinceId: province.id, isNational: false },
+    });
+
+    for (const [index, executive] of executives.entries()) {
+      await prisma.executive.create({
+        data: {
+          name: executive.name,
+          title: executive.title,
+          bio: executive.bio || '',
+          email: executive.email || '',
+          linkedinUrl: executive.linkedinUrl || '',
+          imageUrl: executive.imageUrl || '',
+          provinceId: province.id,
+          isNational: false,
+          sortOrder: index,
+        },
+      });
+    }
   }
 
   await prisma.executive.deleteMany({
