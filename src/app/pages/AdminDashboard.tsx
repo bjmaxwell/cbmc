@@ -73,6 +73,17 @@ type ProvinceDraft = {
   isEnabled: boolean;
 };
 
+type ExecutiveDraft = {
+  id: string;
+  name: string;
+  position: string;
+  province: string;
+  bio: string;
+  email: string;
+  linkedinUrl: string;
+  imageUrl: string;
+};
+
 const initialProvinceDrafts: ProvinceDraft[] = [
   ['Ontario', 'ontario'],
   ['Alberta', 'alberta'],
@@ -381,6 +392,7 @@ export default function AdminDashboard() {
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'admin' as AdminRole, province: '', photoUrl: '' });
   const [memberImportFile, setMemberImportFile] = useState('');
   const [provinceDrafts, setProvinceDrafts] = useState<ProvinceDraft[]>(initialProvinceDrafts);
+  const [provinceExecutives, setProvinceExecutives] = useState<Record<string, ExecutiveDraft[]>>({});
   const [provinceSaveMessage, setProvinceSaveMessage] = useState('');
 
   const role = roleProfiles[activeRole];
@@ -436,6 +448,15 @@ export default function AdminDashboard() {
       .then((items) => {
         if (Array.isArray(items) && items.length > 0) {
           setProvinceDrafts(items);
+          Promise.all(
+            items.map((province) =>
+              fetch(`/api/provinces/${province.slug}/executives`)
+                .then((response) => (response.ok ? response.json() : []))
+                .then((executives) => [province.slug, Array.isArray(executives) ? executives : []] as const),
+            ),
+          )
+            .then((entries) => setProvinceExecutives(Object.fromEntries(entries)))
+            .catch(() => undefined);
         }
       })
       .catch(() => undefined);
@@ -527,6 +548,40 @@ export default function AdminDashboard() {
     setProvinceSaveMessage('');
   };
 
+  const updateProvinceExecutive = (slug: string, id: string, field: keyof ExecutiveDraft, value: string) => {
+    setProvinceExecutives((groups) => ({
+      ...groups,
+      [slug]: (groups[slug] || []).map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+    }));
+    setProvinceSaveMessage('');
+  };
+
+  const addProvinceExecutive = (province: ProvinceDraft) => {
+    setProvinceExecutives((groups) => ({
+      ...groups,
+      [province.slug]: [
+        ...(groups[province.slug] || []),
+        {
+          id: `province-exec-${Date.now()}`,
+          name: 'New Provincial Executive',
+          position: 'Position',
+          province: province.name,
+          bio: '',
+          email: '',
+          linkedinUrl: '',
+          imageUrl: '',
+        },
+      ],
+    }));
+  };
+
+  const removeProvinceExecutive = (slug: string, id: string) => {
+    setProvinceExecutives((groups) => ({
+      ...groups,
+      [slug]: (groups[slug] || []).filter((item) => item.id !== id),
+    }));
+  };
+
   const addExecutive = () => {
     setExecutives((items) => [
       ...items,
@@ -599,6 +654,19 @@ export default function AdminDashboard() {
     const saved = await response.json();
     setProvinceDrafts((items) => items.map((item) => (item.slug === saved.slug ? saved : item)));
     setProvinceSaveMessage(`${saved.name} province page saved to Postgres.`);
+  };
+
+  const saveProvinceExecutives = async (province: ProvinceDraft) => {
+    const response = await fetch(`/api/provinces/${province.slug}/executives`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ executives: provinceExecutives[province.slug] || [] }),
+    });
+
+    if (!response.ok) throw new Error('Unable to save provincial executives');
+    const saved = await response.json();
+    setProvinceExecutives((groups) => ({ ...groups, [province.slug]: saved }));
+    setProvinceSaveMessage(`${province.name} provincial executives saved to Postgres.`);
   };
 
   const saveAllExecutives = async () => {
@@ -1009,6 +1077,125 @@ export default function AdminDashboard() {
                                   />
                                 </label>
                               </div>
+                              <div className="mt-5 border border-gray-200 rounded-sm overflow-hidden">
+                                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-gray-50 p-4 border-b border-gray-200">
+                                  <div>
+                                    <h5 className="font-bold text-[#000000]">Provincial Executives</h5>
+                                    <p className="text-sm text-gray-600">Names, roles, photos, contact links, and short profiles shown on this province page.</p>
+                                  </div>
+                                  <button
+                                    onClick={() => addProvinceExecutive(province)}
+                                    className="inline-flex items-center gap-2 bg-[#20A7DB] text-white px-3 py-2 rounded-sm text-sm"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                    Add Provincial Executive
+                                  </button>
+                                </div>
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4">
+                                  {(provinceExecutives[province.slug] || []).map((executive, index) => (
+                                    <div key={executive.id} className="border border-gray-200 rounded-sm p-4 bg-white">
+                                      <div className="flex items-start gap-4 mb-4">
+                                        <div className="w-24 h-24 bg-gradient-to-br from-[#1a8000] to-[#20A7DB] rounded-sm flex items-center justify-center overflow-hidden flex-shrink-0">
+                                          {executive.imageUrl ? (
+                                            <img src={executive.imageUrl} alt={executive.name} className="w-full h-full object-cover" />
+                                          ) : (
+                                            <User className="w-10 h-10 text-white opacity-60" />
+                                          )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center justify-between gap-3">
+                                            <span className="text-xs font-semibold text-[#1a8000]">Provincial Executive {index + 1}</span>
+                                            <button
+                                              onClick={() => removeProvinceExecutive(province.slug, executive.id)}
+                                              className="text-[#FF0000] text-sm underline"
+                                            >
+                                              Remove
+                                            </button>
+                                          </div>
+                                          <p className="text-xs text-gray-500 mt-1">{province.name}</p>
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <label className="block">
+                                          <span className="block text-xs font-medium text-gray-700 mb-1">Name</span>
+                                          <input
+                                            value={executive.name}
+                                            onChange={(event) => updateProvinceExecutive(province.slug, executive.id, 'name', event.target.value)}
+                                            className="w-full border border-gray-300 px-3 py-2 rounded-sm"
+                                          />
+                                        </label>
+                                        <label className="block">
+                                          <span className="block text-xs font-medium text-gray-700 mb-1">Position</span>
+                                          <input
+                                            value={executive.position}
+                                            onChange={(event) => updateProvinceExecutive(province.slug, executive.id, 'position', event.target.value)}
+                                            className="w-full border border-gray-300 px-3 py-2 rounded-sm"
+                                          />
+                                        </label>
+                                        <label className="block">
+                                          <span className="block text-xs font-medium text-gray-700 mb-1">Email</span>
+                                          <input
+                                            value={executive.email}
+                                            onChange={(event) => updateProvinceExecutive(province.slug, executive.id, 'email', event.target.value)}
+                                            className="w-full border border-gray-300 px-3 py-2 rounded-sm"
+                                          />
+                                        </label>
+                                        <label className="block">
+                                          <span className="block text-xs font-medium text-gray-700 mb-1">LinkedIn URL</span>
+                                          <input
+                                            value={executive.linkedinUrl || ''}
+                                            onChange={(event) => updateProvinceExecutive(province.slug, executive.id, 'linkedinUrl', event.target.value)}
+                                            className="w-full border border-gray-300 px-3 py-2 rounded-sm"
+                                          />
+                                        </label>
+                                        <label className="block md:col-span-2">
+                                          <span className="block text-xs font-medium text-gray-700 mb-1">Photo URL or uploaded media path</span>
+                                          <input
+                                            value={executive.imageUrl}
+                                            onChange={(event) => updateProvinceExecutive(province.slug, executive.id, 'imageUrl', event.target.value)}
+                                            placeholder="/uploads/provincial-executive.jpg"
+                                            className="w-full border border-gray-300 px-3 py-2 rounded-sm"
+                                          />
+                                          <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="mt-2 block w-full text-xs"
+                                            onChange={(event) => {
+                                              const file = event.target.files?.[0];
+                                              if (!file) return;
+                                              uploadMedia(file)
+                                                .then((media) => updateProvinceExecutive(province.slug, executive.id, 'imageUrl', media.url))
+                                                .catch((error) => setProvinceSaveMessage(error.message));
+                                            }}
+                                          />
+                                        </label>
+                                        <label className="block md:col-span-2">
+                                          <span className="block text-xs font-medium text-gray-700 mb-1">Profile / biography</span>
+                                          <textarea
+                                            value={executive.bio}
+                                            onChange={(event) => updateProvinceExecutive(province.slug, executive.id, 'bio', event.target.value)}
+                                            className="w-full min-h-24 border border-gray-300 px-3 py-2 rounded-sm"
+                                          />
+                                        </label>
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {(provinceExecutives[province.slug] || []).length === 0 && (
+                                    <div className="xl:col-span-2 text-sm text-gray-600 bg-white border border-dashed border-gray-300 p-4 rounded-sm">
+                                      No provincial executives added yet.
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-4 border-t border-gray-200">
+                                  <button
+                                    onClick={() => saveProvinceExecutives(province).catch((error) => setProvinceSaveMessage(error.message))}
+                                    className="inline-flex items-center gap-2 bg-[#1a8000] text-white px-4 py-2 rounded-sm text-sm"
+                                  >
+                                    <Save className="w-4 h-4" />
+                                    Save {province.name} Executives
+                                  </button>
+                                </div>
+                              </div>
                               <button
                                 onClick={() => saveProvinceDraft(province).catch((error) => setProvinceSaveMessage(error.message))}
                                 className="inline-flex items-center gap-2 bg-[#1a8000] text-white px-4 py-2 rounded-sm text-sm mt-4"
@@ -1132,11 +1319,11 @@ export default function AdminDashboard() {
                                   />
                                 </label>
                                 <label className="block">
-                                  <span className="block text-xs font-medium text-gray-700 mb-1">Bio</span>
+                                  <span className="block text-xs font-medium text-gray-700 mb-1">Full profile / biography shown on executive profile page</span>
                                   <textarea
                                     value={executive.bio}
                                     onChange={(event) => updateExecutive(executive.id, 'bio', event.target.value)}
-                                    className="w-full min-h-24 border border-gray-300 px-3 py-2 rounded-sm"
+                                    className="w-full min-h-36 border border-gray-300 px-3 py-2 rounded-sm"
                                   />
                                 </label>
                                 <div className="flex items-center justify-between gap-3 pt-2">

@@ -1,7 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { MapPin, Users, Calendar, Mail, User } from 'lucide-react';
+import { MapPin, Users, Calendar, Mail, User, Linkedin } from 'lucide-react';
 import { useCmsPage } from '../hooks/useCmsPage';
+
+type ProvincialExecutive = {
+  id: string;
+  name: string;
+  position: string;
+  bio: string;
+  email: string;
+  linkedinUrl: string;
+  imageUrl: string;
+};
 
 export default function ProvincialPage() {
   const { province } = useParams<{ province: string }>();
@@ -13,6 +23,7 @@ export default function ProvincialPage() {
     annualEvents: number;
     localChapterCnt: number;
   } | null>(null);
+  const [provincialExecutives, setProvincialExecutives] = useState<ProvincialExecutive[]>([]);
   const page = useCmsPage('provinces', {
     title: 'Provincial Pages',
     headline: 'Provincial Chapters',
@@ -65,10 +76,15 @@ export default function ProvincialPage() {
     if (!province) return;
 
     let cancelled = false;
-    fetch(`/api/provinces/${province}`)
-      .then((response) => (response.ok ? response.json() : Promise.reject()))
-      .then((content) => {
-        if (!cancelled) setProvinceContent(content);
+    Promise.all([
+      fetch(`/api/provinces/${province}`).then((response) => (response.ok ? response.json() : Promise.reject())),
+      fetch(`/api/provinces/${province}/executives`).then((response) => (response.ok ? response.json() : [])),
+    ])
+      .then(([content, executives]) => {
+        if (!cancelled) {
+          setProvinceContent(content);
+          setProvincialExecutives(Array.isArray(executives) ? executives : []);
+        }
       })
       .catch(() => {
         if (!cancelled) setProvinceContent(null);
@@ -78,30 +94,6 @@ export default function ProvincialPage() {
       cancelled = true;
     };
   }, [province]);
-
-  // Mock data for provincial executives
-  const provincialExecutives = [
-    {
-      name: 'John Smith',
-      position: 'Provincial Coordinator',
-      email: 'coordinator@cityboymovement.ca',
-    },
-    {
-      name: 'Sarah Johnson',
-      position: 'Deputy Coordinator',
-      email: 'deputy@cityboymovement.ca',
-    },
-    {
-      name: 'Mike Williams',
-      position: 'Secretary',
-      email: 'secretary@cityboymovement.ca',
-    },
-    {
-      name: 'Emily Davis',
-      position: 'Treasurer',
-      email: 'treasurer@cityboymovement.ca',
-    },
-  ];
 
   // Mock data for local chapters
   const localChapters = [
@@ -204,27 +196,52 @@ export default function ProvincialPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-[#000000] mb-8">Provincial Executives</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {provincialExecutives.map((executive, index) => (
+            {(provincialExecutives.length > 0 ? provincialExecutives : []).map((executive, index) => (
               <div
                 key={index}
                 className="bg-white rounded-sm shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
               >
                 <div className="aspect-square bg-gradient-to-br from-[#1a8000] to-[#20A7DB] flex items-center justify-center">
-                  <User className="w-20 h-20 text-white opacity-50" />
+                  {executive.imageUrl ? (
+                    <img src={executive.imageUrl} alt={executive.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-20 h-20 text-white opacity-50" />
+                  )}
                 </div>
                 <div className="p-6">
                   <h3 className="text-lg font-bold text-[#000000] mb-1">{executive.name}</h3>
                   <p className="text-[#1a8000] font-semibold text-sm mb-3">{executive.position}</p>
-                  <a
-                    href={`mailto:${executive.email}`}
-                    className="inline-flex items-center text-[#20A7DB] hover:text-[#1890c0] text-sm"
-                  >
-                    <Mail className="w-4 h-4 mr-2" />
-                    Contact
-                  </a>
+                  {executive.bio && <p className="text-gray-600 text-sm mb-3">{executive.bio}</p>}
+                  <div className="flex items-center gap-3">
+                    {executive.email && (
+                      <a
+                        href={`mailto:${executive.email}`}
+                        className="inline-flex items-center text-[#20A7DB] hover:text-[#1890c0] text-sm"
+                      >
+                        <Mail className="w-4 h-4 mr-2" />
+                        Contact
+                      </a>
+                    )}
+                    {executive.linkedinUrl && (
+                      <a
+                        href={executive.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-[#20A7DB] hover:text-[#1890c0] text-sm"
+                      >
+                        <Linkedin className="w-4 h-4 mr-2" />
+                        LinkedIn
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
+            {provincialExecutives.length === 0 && (
+              <div className="lg:col-span-4 bg-gray-50 border border-gray-200 p-6 rounded-sm text-gray-600">
+                Provincial executives have not been published for this chapter yet.
+              </div>
+            )}
           </div>
         </div>
       </section>

@@ -174,6 +174,64 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === 'GET' && path.startsWith('/api/provinces/') && path.endsWith('/executives')) {
+      const slug = decodeURIComponent(path.replace('/api/provinces/', '').replace('/executives', ''));
+      const province = await prisma.province.findUnique({ where: { slug } });
+      if (!province) {
+        send(res, 404, { error: 'Province not found' });
+        return;
+      }
+      const executives = await prisma.executive.findMany({
+        where: { provinceId: province.id, isNational: false },
+        include: { province: true },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+      });
+      send(res, 200, executives.map(mapExecutive));
+      return;
+    }
+
+    if (req.method === 'PUT' && path.startsWith('/api/provinces/') && path.endsWith('/executives')) {
+      const slug = decodeURIComponent(path.replace('/api/provinces/', '').replace('/executives', ''));
+      const body = await readJson(req);
+      const province = await prisma.province.findUnique({ where: { slug } });
+      if (!province) {
+        send(res, 404, { error: 'Province not found' });
+        return;
+      }
+
+      const incoming = body.executives || [];
+      const keptIds = incoming.filter((item) => item.id?.startsWith('c')).map((item) => item.id);
+      await prisma.executive.deleteMany({
+        where: {
+          provinceId: province.id,
+          isNational: false,
+          id: { notIn: keptIds },
+        },
+      });
+
+      const results = [];
+      for (const [index, item] of incoming.entries()) {
+        const data = {
+          name: item.name || 'Provincial Executive',
+          title: item.position || 'Position',
+          bio: item.bio || '',
+          email: item.email || '',
+          linkedinUrl: item.linkedinUrl || '',
+          imageUrl: item.imageUrl || '',
+          provinceId: province.id,
+          isNational: false,
+          sortOrder: index,
+        };
+        const executive = item.id?.startsWith('c')
+          ? await prisma.executive.update({ where: { id: item.id }, data, include: { province: true } })
+          : await prisma.executive.create({ data, include: { province: true } });
+        results.push(mapExecutive(executive));
+      }
+
+      send(res, 200, results);
+      return;
+    }
+
     if (req.method === 'GET' && path.startsWith('/api/provinces/')) {
       const slug = decodeURIComponent(path.replace('/api/provinces/', ''));
       const province = await prisma.province.findUnique({
@@ -208,6 +266,7 @@ const server = createServer(async (req, res) => {
 
     if (req.method === 'GET' && path === '/api/executives') {
       const executives = await prisma.executive.findMany({
+        where: { isNational: true },
         include: { province: true },
         orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
       });
