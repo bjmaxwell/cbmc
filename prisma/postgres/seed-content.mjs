@@ -45,19 +45,55 @@ const provinceExecutiveSeeds = {
       name: "'Jide Adeyemi",
       title: 'Provincial Coordinator',
       linkedinUrl: 'https://www.linkedin.com/in/jide-adeyemi-a1164717/',
+      imageUrl: '/uploads/1781221934562-img-20260524-wa0129.jpg',
     },
-    { name: 'Leke Omole', title: 'Deputy Provincial Coordinator' },
-    { name: 'Olumuyiwa opaleye', title: 'Zonal Coordinator - Edmonton' },
-    { name: 'Saheed Ibrahim', title: 'Provincial Secretary' },
-    { name: 'Matthew Odusi', title: 'Assitant Provincial Secretary' },
-    { name: 'Prince Obinna Ikwuagu', title: 'Provincial Treasurer' },
+    {
+      name: 'Leke Omole',
+      title: 'Deputy Provincial Coordinator',
+      imageUrl: '/uploads/1781221383849-8d2f5c06-4a9b-4148-8ca5-c43877649b26-1-.jpg',
+    },
+    { name: 'Olumuyiwa Opaleye', title: 'Zonal Coordinator - Edmonton' },
+    { name: 'Saheed Ibrahim', title: 'Provincial Secretary', imageUrl: '/uploads/1781221431560-img_0707.jpeg' },
+    { name: 'Matthew Odusi', title: 'Assitant Provincial Secretary', imageUrl: '/uploads/1781221467307-img_6007.jpeg' },
+    {
+      name: 'Prince Obinna Ikwuagu',
+      title: 'Provincial Treasurer',
+      imageUrl: '/uploads/1781221535952-aiselect_20260524_153115_whatsapp.jpg',
+    },
     { name: 'Olumide Chirs', title: 'Strategy & Planning Lead' },
-    { name: 'Edgar Ehanire', title: 'Media & COmmunications Lead' },
+    { name: 'Edgar Ehanire', title: 'Media & COmmunications Lead', imageUrl: '/uploads/1781221495893-image0-1-.jpeg' },
     { name: 'Mayowa Adeniyi', title: 'IT & Data Management Lead' },
     { name: 'Oguntoye Akinlolu', title: 'Youth & Students Leader' },
     { name: 'Yadua Gabriel Idenaa', title: 'Provincial Financial Secretary' },
     { name: 'Meg Okia', title: 'Women Leader' },
     { name: 'Abisoye Bamigboye', title: 'Partnerships & Fundraising Lead' },
+  ],
+  'nova-scotia': [
+    {
+      name: 'Oluwaseyi Adepoju',
+      title: 'Provincial Coordinator',
+      imageUrl: '/uploads/1781221619228-file_00000000267071f6ac9068120d3fe812.png',
+    },
+  ],
+  'newfoundland-and-labrador': [
+    {
+      name: 'Oluwaseyi Adepoju',
+      title: 'Provincial Coordinator',
+      imageUrl: '/uploads/1781221776098-file_00000000267071f6ac9068120d3fe812.png',
+    },
+  ],
+  'new-brunswick': [
+    {
+      name: 'Oluwaseyi Adepoju',
+      title: 'Provincial Coordinator',
+      imageUrl: '/uploads/1781221825341-file_00000000267071f6ac9068120d3fe812.png',
+    },
+  ],
+  'prince-edward-island': [
+    {
+      name: 'Oluwaseyi Adepoju',
+      title: 'Provincial Coordinator',
+    },
   ],
 };
 
@@ -83,16 +119,23 @@ const executives = [
     bio: 'Leading CBM Canada with vision and dedication to community excellence.',
     email: 'adebayo.adedosu@cityboymovementcanada.org',
     linkedinUrl: 'https://www.linkedin.com/in/ade-adedosu-95840220/',
-    imageUrl: '/uploads/1779572252381-img-20260115-wa0166.jpg',
+    imageUrl: '/uploads/1781219749956-img-20260610-wa0108.jpg',
   },
   {
     name: 'Tolulope Awogbemi',
     title: 'Deputy Country Director',
     bio: 'Leading CBM Canada with vision and dedication to community excellence.',
     linkedinUrl: 'https://www.linkedin.com/in/tolulope-awogbemi-b9743836/',
+    imageUrl: '/uploads/1781233466717-seun_ade.jpg',
   },
   { name: 'Sheyi Akinwale', title: 'General Secretary', bio: 'Driving strategic initiatives and membership growth across Canada.' },
-  { name: 'Afoluke Juwape', title: 'Assistant Secretary', bio: 'Managing organizational operations and communications.' },
+  {
+    name: 'Folu Juwape',
+    title: 'Assistant Secretary',
+    bio: 'Managing organizational operations and communications.',
+    linkedinUrl: 'https://www.linkedin.com/in/foluke-juwape-ba2508175/',
+    imageUrl: '/uploads/1781219962614-img_4120.jpg',
+  },
   { name: 'Ibraheem Haruna', title: 'Strategy and Planning', bio: 'Ensuring financial transparency and accountability.' },
   {
     name: 'Tosin Adeda',
@@ -107,13 +150,14 @@ const executives = [
     name: 'Ifeoluwa Leo-Olagbaye',
     title: 'Assistant Woman Leader',
     bio: 'Building and nurturing our membership community.',
-    imageUrl: '/uploads/1779597419825-ife.jpeg',
+    imageUrl: '/uploads/1781222302002-img-20260309-wa0004-1-.jpg',
   },
   {
     name: 'Jide Adeyemi',
     title: 'Contact and Mobilization Officer',
     bio: 'Empowering young Canadians through mentorship programs.',
     linkedinUrl: 'https://www.linkedin.com/in/jide-adeyemi-a1164717/',
+    imageUrl: '/uploads/1781221985499-img-20260524-wa0129.jpg',
   },
   {
     name: 'Engr. Abdul Rafiu Badru',
@@ -150,6 +194,12 @@ const executives = [
   { name: 'Kunle Ogundijo', title: 'Director, Fundraising' },
   { name: 'Wale Rabiu', title: 'Director, Sponsorship' },
   { name: 'Adewale Donald', title: 'Liaison, Nigeria Entertainment Group' },
+  {
+    name: 'Paige Afanu',
+    title: 'Director, Inter-Governmental Affairs',
+    linkedinUrl: 'https://www.linkedin.com/in/peju-afanu-7b9367110/',
+    imageUrl: '/uploads/1781219589998-79490.jpg',
+  },
 ];
 
 async function upsertHero(pageId, headline, body) {
@@ -238,6 +288,13 @@ async function main() {
   await prisma.executive.deleteMany({
     where: {
       name: { in: placeholderExecutiveNames },
+    },
+  });
+
+  await prisma.executive.deleteMany({
+    where: {
+      isNational: true,
+      name: { notIn: executives.map((executive) => executive.name) },
     },
   });
 
