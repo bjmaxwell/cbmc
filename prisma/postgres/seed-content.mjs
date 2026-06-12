@@ -136,7 +136,32 @@ const executives = [
     linkedinUrl: 'https://www.linkedin.com/in/foluke-juwape-ba2508175/',
     imageUrl: '/uploads/1781219962614-img_4120.jpg',
   },
-  { name: 'Ibraheem Haruna', title: 'Strategy and Planning', bio: 'Ensuring financial transparency and accountability.' },
+  {
+    name: 'Dolapo Conteh',
+    title: 'Treasurer',
+    email: 'finance@cityboymovementcanada.org',
+    linkedinUrl: 'https://www.linkedin.com/in/dolapo-conteh-cfa-fcca-cpa-7970765/',
+    imageUrl: '/uploads/1779572703057-conteh.jpeg',
+  },
+  { name: 'Aishat Aliyu Adeleke', title: 'Women Leader', bio: 'Planning and executing memorable community events.' },
+  {
+    name: 'Bola Oduyale',
+    title: 'Director, Finance',
+    bio: 'Leading community service and social impact initiatives.',
+    email: 'finance@cityboymovementcanada.org',
+  },
+  {
+    name: 'Paige Afanu',
+    title: 'Director, Inter-Governmental Affairs',
+    linkedinUrl: 'https://www.linkedin.com/in/peju-afanu-7b9367110/',
+    imageUrl: '/uploads/1781219589998-79490.jpg',
+  },
+  {
+    name: 'Ifeoluwa Leo-Olagbaye',
+    title: 'Assistant Woman Leader',
+    bio: 'Building and nurturing our membership community.',
+    imageUrl: '/uploads/1781222302002-img-20260309-wa0004-1-.jpg',
+  },
   {
     name: 'Tosin Adeda',
     title: 'Youth Leader',
@@ -145,13 +170,6 @@ const executives = [
     imageUrl: '/uploads/1779571933087-fb_img_1779571781439.jpg',
   },
   { name: 'Lotanna Dennis', title: "Students' Community Contact Lead", bio: 'Managing media relations and public outreach.' },
-  { name: 'Aishat Aliyu Adeleke', title: 'Women Leader', bio: 'Planning and executing memorable community events.' },
-  {
-    name: 'Ifeoluwa Leo-Olagbaye',
-    title: 'Assistant Woman Leader',
-    bio: 'Building and nurturing our membership community.',
-    imageUrl: '/uploads/1781222302002-img-20260309-wa0004-1-.jpg',
-  },
   {
     name: 'Jide Adeyemi',
     title: 'Contact and Mobilization Officer',
@@ -160,31 +178,19 @@ const executives = [
     imageUrl: '/uploads/1781221985499-img-20260524-wa0129.jpg',
   },
   {
+    name: 'Gideon Adedokun',
+    title: 'Welfare and Logistics',
+    linkedinUrl: 'https://www.linkedin.com/in/goadedokun/',
+    imageUrl: '/uploads/1779597430653-gideon.jpeg',
+  },
+  { name: 'Ibraheem Haruna', title: 'Strategy and Planning', bio: 'Ensuring financial transparency and accountability.' },
+  {
     name: 'Engr. Abdul Rafiu Badru',
     title: 'Director, Local Canvassing',
     bio: 'Driving digital innovation and technological advancement.',
     linkedinUrl: 'https://www.linkedin.com/in/abdul-rafiu-badru-684b9513/',
   },
   { name: 'Babawale Lookman', title: 'Assistant Director, Local Canvassing', bio: 'Building positive relationships with stakeholders and media.' },
-  {
-    name: 'Bola Oduyale',
-    title: 'Director, Finance',
-    bio: 'Leading community service and social impact initiatives.',
-    email: 'finance@cityboymovementcanada.org',
-  },
-  {
-    name: 'Dolapo Conteh',
-    title: 'Treasurer',
-    email: 'finance@cityboymovementcanada.org',
-    linkedinUrl: 'https://www.linkedin.com/in/dolapo-conteh-cfa-fcca-cpa-7970765/',
-    imageUrl: '/uploads/1779572703057-conteh.jpeg',
-  },
-  {
-    name: 'Gideon Adedokun',
-    title: 'Welfare and Logistics',
-    linkedinUrl: 'https://www.linkedin.com/in/goadedokun/',
-    imageUrl: '/uploads/1779597430653-gideon.jpeg',
-  },
   { name: 'BJ', title: 'Director, IT and Projects', email: 'admin@cityboymovementcanada.org' },
   { name: 'Wale Balogun', title: 'Director, Membership Data', linkedinUrl: 'https://www.linkedin.com/in/kazeemwalebalogun/' },
   { name: 'Bolatito Adebola', title: 'Director, Information & Media Relations' },
@@ -194,12 +200,6 @@ const executives = [
   { name: 'Kunle Ogundijo', title: 'Director, Fundraising' },
   { name: 'Wale Rabiu', title: 'Director, Sponsorship' },
   { name: 'Adewale Donald', title: 'Liaison, Nigeria Entertainment Group' },
-  {
-    name: 'Paige Afanu',
-    title: 'Director, Inter-Governmental Affairs',
-    linkedinUrl: 'https://www.linkedin.com/in/peju-afanu-7b9367110/',
-    imageUrl: '/uploads/1781219589998-79490.jpg',
-  },
 ];
 
 async function upsertHero(pageId, headline, body) {
