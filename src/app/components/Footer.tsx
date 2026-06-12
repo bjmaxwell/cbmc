@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
+import { BrandIcon } from './BrandIcon';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -55,8 +56,8 @@ export function Footer() {
               </li>
               <li className="flex items-center space-x-2">
                 <Phone className="w-4 h-4 text-[#20A7DB]" />
-                <a href="tel:+1234567890" className="hover:text-[#20A7DB] transition-colors text-gray-300">
-                  +1 (234) 567-8900
+                <a href="tel:+16475678900" className="hover:text-[#20A7DB] transition-colors text-gray-300">
+                  +1 (647) 238-3796
                 </a>
               </li>
             </ul>
@@ -66,38 +67,25 @@ export function Footer() {
           <div>
             <h3 className="font-bold mb-4 text-[#20A7DB]">Follow Us</h3>
             <div className="flex flex-wrap gap-3">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-[#20A7DB] rounded-sm flex items-center justify-center hover:bg-[#1a8000] transition-colors"
-              >
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-[#20A7DB] rounded-sm flex items-center justify-center hover:bg-[#1a8000] transition-colors"
-              >
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-[#20A7DB] rounded-sm flex items-center justify-center hover:bg-[#1a8000] transition-colors"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-[#20A7DB] rounded-sm flex items-center justify-center hover:bg-[#1a8000] transition-colors"
-              >
-                <Linkedin className="w-5 h-5" />
-              </a>
+              {[
+                ['facebook', 'Facebook', 'https://facebook.com', 'hover:bg-[#1877F2]'],
+                ['x', 'X', 'https://x.com', 'hover:bg-white hover:text-black'],
+                ['instagram', 'Instagram', 'https://instagram.com', 'hover:bg-[#E4405F]'],
+                ['linkedin', 'LinkedIn', 'https://linkedin.com', 'hover:bg-[#0A66C2]'],
+                ['tiktok', 'TikTok', 'https://tiktok.com', 'hover:bg-white hover:text-black'],
+              ].map(([brand, label, href, hoverClass]) => (
+                <a
+                  key={brand}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  title={label}
+                  className={`w-11 h-11 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-white transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${hoverClass}`}
+                >
+                  <BrandIcon brand={brand as 'facebook' | 'x' | 'instagram' | 'linkedin' | 'tiktok'} className="w-5 h-5" />
+                </a>
+              ))}
             </div>
             <div className="mt-6">
               <Link

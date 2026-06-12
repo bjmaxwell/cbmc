@@ -1,7 +1,9 @@
-import { FormEvent, ReactNode, useEffect, useMemo, useState } from 'react';
+import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Activity,
+  ArrowDown,
+  ArrowUp,
   BarChart3,
   CheckCircle2,
   DatabaseZap,
@@ -60,6 +62,16 @@ type LoginProfile = {
   mustChangePassword?: boolean;
 };
 
+type AdminSession = Pick<LoginProfile, 'name' | 'role'>;
+
+function moveItem<T>(items: T[], fromIndex: number, toIndex: number) {
+  if (fromIndex === toIndex || toIndex < 0 || toIndex >= items.length) return items;
+  const next = [...items];
+  const [item] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, item);
+  return next;
+}
+
 type ProvinceDraft = {
   id: string;
   name: string;
@@ -83,6 +95,11 @@ type ExecutiveDraft = {
   linkedinUrl: string;
   imageUrl: string;
 };
+
+async function getResponseError(response: Response, fallback: string) {
+  const body = await response.json().catch(() => null);
+  return body?.error ? `${fallback}: ${body.error}` : fallback;
+}
 
 const initialProvinceDrafts: ProvinceDraft[] = [
   ['Ontario', 'ontario'],
@@ -118,13 +135,14 @@ const initialCredentials: Record<string, LoginProfile> = {
 };
 
 export default function AdminDashboard() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const storedAdminSession = getStoredAdminSession();
+  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(storedAdminSession));
   const [credentials, setCredentials] = useState({ username: '', password: '' });
-  const [activeUser, setActiveUser] = useState<LoginProfile | null>(null);
+  const [activeUser, setActiveUser] = useState<AdminSession | null>(storedAdminSession);
   const [passwordChangeRequired, setPasswordChangeRequired] = useState(false);
   const [newPassword, setNewPassword] = useState({ password: '', confirm: '' });
-  const [activeRole, setActiveRole] = useState<AdminRole>('super-admin');
-  const [activeSection, setActiveSection] = useState<SectionId>('overview');
+  const [activeRole, setActiveRole] = useState<AdminRole>(storedAdminSession?.role ?? 'super-admin');
+  const [activeSection, setActiveSection] = useState<SectionId>(() => getStoredAdminSection());
   const [adminPublishingEnabled, setAdminPublishingEnabled] = useState(false);
   const [downloadProtectionEnabled, setDownloadProtectionEnabled] = useState(true);
   const [carouselOpacity, setCarouselOpacity] = useState(50);
@@ -394,9 +412,33 @@ export default function AdminDashboard() {
   const [provinceDrafts, setProvinceDrafts] = useState<ProvinceDraft[]>(initialProvinceDrafts);
   const [provinceExecutives, setProvinceExecutives] = useState<Record<string, ExecutiveDraft[]>>({});
   const [provinceSaveMessage, setProvinceSaveMessage] = useState('');
+  const pendingExecutiveFocus = useRef<string | null>(null);
 
   const role = roleProfiles[activeRole];
   const canPublish = activeRole === 'super-admin' || (activeRole === 'admin' && adminPublishingEnabled);
+
+  useEffect(() => {
+    window.sessionStorage.setItem('cbmc-admin-section', activeSection);
+  }, [activeSection]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !activeUser) return;
+    const session = { name: activeUser.name, role: activeRole };
+    setActiveUser(session);
+    storeAdminSession(session);
+  }, [activeRole, isAuthenticated]);
+
+  useEffect(() => {
+    const id = pendingExecutiveFocus.current;
+    if (!id) return;
+
+    pendingExecutiveFocus.current = null;
+    requestAnimationFrame(() => {
+      const card = document.getElementById(id);
+      card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card?.querySelector<HTMLInputElement>('input[data-executive-name]')?.focus({ preventScroll: true });
+    });
+  }, [executives, provinceExecutives]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -491,11 +533,12 @@ export default function AdminDashboard() {
 
     if (profile && profile.password === credentials.password) {
       setActiveRole(profile.role);
-      setActiveUser({ ...profile, name: profile.name });
+      setActiveUser({ name: profile.name, role: profile.role });
       if (profile.mustChangePassword) {
         setPasswordChangeRequired(true);
         return;
       }
+      storeAdminSession({ name: profile.name, role: profile.role });
       setIsAuthenticated(true);
       return;
     }
@@ -524,6 +567,7 @@ export default function AdminDashboard() {
     };
     window.localStorage.setItem('cbmc-admin-password-overrides', JSON.stringify(overrides));
     setPasswordChangeRequired(false);
+    storeAdminSession(activeUser);
     setIsAuthenticated(true);
   };
 
@@ -557,12 +601,14 @@ export default function AdminDashboard() {
   };
 
   const addProvinceExecutive = (province: ProvinceDraft) => {
+    const id = `province-exec-${Date.now()}`;
+    pendingExecutiveFocus.current = `province-executive-card-${id}`;
     setProvinceExecutives((groups) => ({
       ...groups,
       [province.slug]: [
         ...(groups[province.slug] || []),
         {
-          id: `province-exec-${Date.now()}`,
+          id,
           name: 'New Provincial Executive',
           position: 'Position',
           province: province.name,
@@ -582,11 +628,21 @@ export default function AdminDashboard() {
     }));
   };
 
+  const moveProvinceExecutive = (slug: string, fromIndex: number, toIndex: number) => {
+    setProvinceExecutives((groups) => ({
+      ...groups,
+      [slug]: moveItem(groups[slug] || [], fromIndex, toIndex),
+    }));
+    setProvinceSaveMessage('Placement changed. Save the provincial executives to publish the new order.');
+  };
+
   const addExecutive = () => {
+    const id = `exec-${Date.now()}`;
+    pendingExecutiveFocus.current = `executive-card-${id}`;
     setExecutives((items) => [
       ...items,
       {
-        id: `exec-${Date.now()}`,
+        id,
         name: 'New Executive',
         position: 'Position',
         province: '',
@@ -596,6 +652,11 @@ export default function AdminDashboard() {
         imageUrl: '',
       },
     ]);
+  };
+
+  const moveExecutive = (fromIndex: number, toIndex: number) => {
+    setExecutives((items) => moveItem(items, fromIndex, toIndex));
+    setContentSaveMessage('Placement changed. Save the entire Executives page to publish the new order.');
   };
 
   const savePageDraft = async (pageId: string) => {
@@ -613,7 +674,7 @@ export default function AdminDashboard() {
       }),
     });
 
-    if (!response.ok) throw new Error('Unable to save page');
+    if (!response.ok) throw new Error(await getResponseError(response, 'Unable to save page'));
     const updated = await response.json();
     setPageState((pages) =>
       pages.map((page) =>
@@ -822,6 +883,8 @@ export default function AdminDashboard() {
               ))}
             </select>
             <button onClick={() => {
+              window.sessionStorage.removeItem('cbmc-admin-session');
+              window.localStorage.removeItem('cbmc-admin-preview');
               setIsAuthenticated(false);
               setActiveUser(null);
               setCredentials({ username: '', password: '' });
@@ -1010,7 +1073,11 @@ export default function AdminDashboard() {
                               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
                                 <div>
                                   <h4 className="text-xl font-bold text-[#000000]">{province.name}</h4>
-                                  <Link to={`/provinces/${province.slug}`} className="text-sm text-[#20A7DB] hover:underline">
+                                  <Link
+                                    to={`/provinces/${province.slug}`}
+                                    onClick={() => window.localStorage.setItem('cbmc-admin-preview', 'active')}
+                                    className="text-sm text-[#20A7DB] hover:underline"
+                                  >
                                     View public province page
                                   </Link>
                                 </div>
@@ -1093,7 +1160,7 @@ export default function AdminDashboard() {
                                 </div>
                                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4">
                                   {(provinceExecutives[province.slug] || []).map((executive, index) => (
-                                    <div key={executive.id} className="border border-gray-200 rounded-sm p-4 bg-white">
+                                    <div id={`province-executive-card-${executive.id}`} key={executive.id} className="border border-gray-200 rounded-sm p-4 bg-white">
                                       <div className="flex items-start gap-4 mb-4">
                                         <div className="w-24 h-24 bg-gradient-to-br from-[#1a8000] to-[#20A7DB] rounded-sm flex items-center justify-center overflow-hidden flex-shrink-0">
                                           {executive.imageUrl ? (
@@ -1103,14 +1170,44 @@ export default function AdminDashboard() {
                                           )}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                          <div className="flex items-center justify-between gap-3">
+                                          <div className="flex flex-wrap items-center justify-between gap-3">
                                             <span className="text-xs font-semibold text-[#1a8000]">Provincial Executive {index + 1}</span>
-                                            <button
-                                              onClick={() => removeProvinceExecutive(province.slug, executive.id)}
-                                              className="text-[#FF0000] text-sm underline"
-                                            >
-                                              Remove
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                              <button
+                                                type="button"
+                                                disabled={index === 0}
+                                                onClick={() => moveProvinceExecutive(province.slug, index, index - 1)}
+                                                className="p-1 border border-gray-300 text-gray-700 disabled:opacity-30"
+                                                title="Move up"
+                                              >
+                                                <ArrowUp className="w-4 h-4" />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                disabled={index === (provinceExecutives[province.slug] || []).length - 1}
+                                                onClick={() => moveProvinceExecutive(province.slug, index, index + 1)}
+                                                className="p-1 border border-gray-300 text-gray-700 disabled:opacity-30"
+                                                title="Move down"
+                                              >
+                                                <ArrowDown className="w-4 h-4" />
+                                              </button>
+                                              <select
+                                                aria-label={`Placement for ${executive.name}`}
+                                                value={index}
+                                                onChange={(event) => moveProvinceExecutive(province.slug, index, Number(event.target.value))}
+                                                className="border border-gray-300 px-2 py-1 text-xs"
+                                              >
+                                                {(provinceExecutives[province.slug] || []).map((_, placement) => (
+                                                  <option key={placement} value={placement}>Position {placement + 1}</option>
+                                                ))}
+                                              </select>
+                                              <button
+                                                onClick={() => removeProvinceExecutive(province.slug, executive.id)}
+                                                className="text-[#FF0000] text-sm underline"
+                                              >
+                                                Remove
+                                              </button>
+                                            </div>
                                           </div>
                                           <p className="text-xs text-gray-500 mt-1">{province.name}</p>
                                         </div>
@@ -1119,6 +1216,7 @@ export default function AdminDashboard() {
                                         <label className="block">
                                           <span className="block text-xs font-medium text-gray-700 mb-1">Name</span>
                                           <input
+                                            data-executive-name
                                             value={executive.name}
                                             onChange={(event) => updateProvinceExecutive(province.slug, executive.id, 'name', event.target.value)}
                                             className="w-full border border-gray-300 px-3 py-2 rounded-sm"
@@ -1237,7 +1335,7 @@ export default function AdminDashboard() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 p-5">
                           {executives.map((executive, index) => (
-                            <div key={executive.id} className="bg-white rounded-sm shadow-lg overflow-hidden border border-gray-200">
+                            <div id={`executive-card-${executive.id}`} key={executive.id} className="bg-white rounded-sm shadow-lg overflow-hidden border border-gray-200">
                               <div className="aspect-square bg-gradient-to-br from-[#22B600] to-[#20A7DB] flex items-center justify-center relative">
                                 {executive.imageUrl ? (
                                   <img src={executive.imageUrl} alt={executive.name} className="w-full h-full object-cover" />
@@ -1246,18 +1344,49 @@ export default function AdminDashboard() {
                                 )}
                               </div>
                               <div className="p-5 space-y-3">
-                                <div className="flex items-center justify-between gap-3">
+                                <div className="flex flex-wrap items-center justify-between gap-3">
                                   <span className="text-xs font-semibold text-[#1a8000]">Executive {index + 1}</span>
-                                  <button
-                                    onClick={() => removeExecutive(executive.id).catch((error) => setContentSaveMessage(error.message))}
-                                    className="text-[#FF0000] text-sm underline"
-                                  >
-                                    Remove
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      disabled={index === 0}
+                                      onClick={() => moveExecutive(index, index - 1)}
+                                      className="p-1 border border-gray-300 text-gray-700 disabled:opacity-30"
+                                      title="Move up"
+                                    >
+                                      <ArrowUp className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={index === executives.length - 1}
+                                      onClick={() => moveExecutive(index, index + 1)}
+                                      className="p-1 border border-gray-300 text-gray-700 disabled:opacity-30"
+                                      title="Move down"
+                                    >
+                                      <ArrowDown className="w-4 h-4" />
+                                    </button>
+                                    <select
+                                      aria-label={`Placement for ${executive.name}`}
+                                      value={index}
+                                      onChange={(event) => moveExecutive(index, Number(event.target.value))}
+                                      className="border border-gray-300 px-2 py-1 text-xs"
+                                    >
+                                      {executives.map((_, placement) => (
+                                        <option key={placement} value={placement}>Position {placement + 1}</option>
+                                      ))}
+                                    </select>
+                                    <button
+                                      onClick={() => removeExecutive(executive.id).catch((error) => setContentSaveMessage(error.message))}
+                                      className="text-[#FF0000] text-sm underline"
+                                    >
+                                      Remove
+                                    </button>
+                                  </div>
                                 </div>
                                 <label className="block">
                                   <span className="block text-xs font-medium text-gray-700 mb-1">Name</span>
                                   <input
+                                    data-executive-name
                                     value={executive.name}
                                     onChange={(event) => updateExecutive(executive.id, 'name', event.target.value)}
                                     className="w-full border border-gray-300 px-3 py-2 rounded-sm text-xl font-bold text-[#000000]"
@@ -1340,7 +1469,11 @@ export default function AdminDashboard() {
                                     </span>
                                   </div>
                                   {executive.id.startsWith('c') && (
-                                    <Link to={`/executives/${executive.id}`} className="text-sm text-[#20A7DB] hover:underline">
+                                    <Link
+                                      to={`/executives/${executive.id}`}
+                                      onClick={() => window.localStorage.setItem('cbmc-admin-preview', 'active')}
+                                      className="text-sm text-[#20A7DB] hover:underline"
+                                    >
                                       View profile
                                     </Link>
                                   )}
@@ -1794,6 +1927,22 @@ function getStoredPasswordOverrides(): Record<string, { password: string; mustCh
   } catch {
     return {};
   }
+}
+
+function getStoredAdminSession(): AdminSession | null {
+  try {
+    return JSON.parse(window.sessionStorage.getItem('cbmc-admin-session') || 'null');
+  } catch {
+    return null;
+  }
+}
+
+function storeAdminSession(session: AdminSession) {
+  window.sessionStorage.setItem('cbmc-admin-session', JSON.stringify(session));
+}
+
+function getStoredAdminSection(): SectionId {
+  return (window.sessionStorage.getItem('cbmc-admin-section') as SectionId | null) ?? 'overview';
 }
 
 function getLoginProfile(username: string): LoginProfile | undefined {

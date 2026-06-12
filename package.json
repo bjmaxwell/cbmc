@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "build": "vite build",
-    "dev": "vite",
+    "dev": "node scripts/dev.mjs",
     "api": "node server/index.mjs",
     "mobile": "npm --workspace apps/mobile run start",
     "build:web": "vite build",

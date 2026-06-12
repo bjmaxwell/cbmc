@@ -5,6 +5,8 @@ import { DownloadProtection } from './components/DownloadProtection';
 import { PageGate } from './components/PageGate';
 import { AdminReturnLink } from './components/AdminReturnLink';
 import { PreviewGate } from './components/PreviewGate';
+import { ScrollToTop } from './components/ScrollToTop';
+import { PageBackLink } from './components/PageBackLink';
 
 // Page imports
 import HomePage from './pages/HomePage';
@@ -37,9 +39,11 @@ function AppShell() {
   return (
     <PreviewGate>
       <div className="min-h-screen flex flex-col bg-white">
+        <ScrollToTop />
         <DownloadProtection />
         {!isAdmin && <Navigation />}
         {!isAdmin && <AdminReturnLink />}
+        {!isAdmin && <PageBackLink />}
         <main className="flex-1">
           <Routes>
             <Route path="/" element={<PageGate pageId="home"><HomePage /></PageGate>} />

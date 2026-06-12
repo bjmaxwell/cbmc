@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Mail, Phone, MapPin, Send, Facebook, Twitter, Instagram, Linkedin, CheckCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react';
 import { useCmsPage } from '../hooks/useCmsPage';
+import { BrandIcon } from '../components/BrandIcon';
 
 export default function ContactPage() {
   const page = useCmsPage('contact', {
@@ -57,10 +58,11 @@ export default function ContactPage() {
   ];
 
   const socialLinks = [
-    { icon: Facebook, name: 'Facebook', url: 'https://facebook.com' },
-    { icon: Twitter, name: 'Twitter', url: 'https://twitter.com' },
-    { icon: Instagram, name: 'Instagram', url: 'https://instagram.com' },
-    { icon: Linkedin, name: 'LinkedIn', url: 'https://linkedin.com' },
+    { brand: 'facebook' as const, name: 'Facebook', url: 'https://facebook.com', color: 'hover:bg-[#1877F2]' },
+    { brand: 'x' as const, name: 'X', url: 'https://x.com', color: 'hover:bg-black' },
+    { brand: 'instagram' as const, name: 'Instagram', url: 'https://instagram.com', color: 'hover:bg-[#E4405F]' },
+    { brand: 'linkedin' as const, name: 'LinkedIn', url: 'https://linkedin.com', color: 'hover:bg-[#0A66C2]' },
+    { brand: 'tiktok' as const, name: 'TikTok', url: 'https://tiktok.com', color: 'hover:bg-black' },
   ];
 
   const departments = [
@@ -220,21 +222,18 @@ export default function ContactPage() {
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-xl font-bold text-[#000000] mb-6">Follow Us</h3>
               <div className="grid grid-cols-2 gap-3">
-                {socialLinks.map((social, index) => {
-                  const Icon = social.icon;
-                  return (
+                {socialLinks.map((social) => (
                     <a
-                      key={index}
+                      key={social.brand}
                       href={social.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg hover:bg-[#22B600] hover:text-white transition-colors group"
+                      className={`flex items-center space-x-2 p-3 bg-gray-50 rounded-lg hover:text-white hover:-translate-y-0.5 hover:shadow-md transition-all group ${social.color}`}
                     >
-                      <Icon className="w-5 h-5" />
+                      <BrandIcon brand={social.brand} className="w-5 h-5" />
                       <span className="text-sm font-semibold">{social.name}</span>
                     </a>
-                  );
-                })}
+                  ))}
               </div>
             </div>
 

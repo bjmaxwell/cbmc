@@ -30,11 +30,14 @@ Install dependencies:
 npm install
 ```
 
-Run the web app:
+Run the web app and API together:
 
 ```bash
 npm run dev
 ```
+
+The Vite app proxies `/api` requests to the API on port `4000`. For frontend-only
+work when the API is already running elsewhere, use `npm run dev:web`.
 
 Run the mobile app:
 

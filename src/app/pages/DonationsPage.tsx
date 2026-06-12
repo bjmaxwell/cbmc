@@ -1,7 +1,56 @@
 import { useState } from 'react';
-import { Heart, CreditCard, DollarSign, Lock, CheckCircle, TrendingUp, Users, Award } from 'lucide-react';
+import { CreditCard, DollarSign, Lock, CheckCircle, TrendingUp, Users, Award } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useCmsPage } from '../hooks/useCmsPage';
+
+type CardBrand = 'Visa' | 'Mastercard' | 'American Express' | 'Discover' | null;
+
+function formatCardNumber(value: string) {
+  return value.replace(/\D/g, '').slice(0, 19).replace(/(.{4})/g, '$1 ').trim();
+}
+
+function formatExpiry(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 4);
+  return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+}
+
+function detectCardBrand(value: string): CardBrand {
+  const digits = value.replace(/\D/g, '');
+  if (digits.length < 4) return null;
+  if (/^4/.test(digits)) return 'Visa';
+  if (/^(34|37)/.test(digits)) return 'American Express';
+  if (/^(5[1-5]|2[2-7])/.test(digits)) return 'Mastercard';
+  if (/^(6011|65|64[4-9])/.test(digits)) return 'Discover';
+  return null;
+}
+
+function CardBrandBadge({ brand }: { brand: Exclude<CardBrand, null> }) {
+  if (brand === 'Mastercard') {
+    return (
+      <span aria-label="Mastercard" title="Mastercard" className="relative block w-12 h-7 rounded-md bg-white border border-gray-200 shadow-sm">
+        <span className="absolute left-2 top-1.5 w-4 h-4 rounded-full bg-[#EB001B]" />
+        <span className="absolute right-2 top-1.5 w-4 h-4 rounded-full bg-[#F79E1B] opacity-90" />
+      </span>
+    );
+  }
+
+  const styles = {
+    Visa: 'text-[#1434CB] bg-white',
+    'American Express': 'text-white bg-[#2E77BC]',
+    Discover: 'text-[#111111] bg-white',
+  };
+  const labels = { Visa: 'VISA', 'American Express': 'AMEX', Discover: 'DISCOVER' };
+
+  return (
+    <span
+      aria-label={brand}
+      title={brand}
+      className={`block rounded-md border border-gray-200 px-2 py-1 text-[10px] font-black tracking-tight shadow-sm ${styles[brand]}`}
+    >
+      {labels[brand]}
+    </span>
+  );
+}
 
 export default function DonationsPage() {
   const page = useCmsPage('donate', {
@@ -13,15 +62,12 @@ export default function DonationsPage() {
   const [donationAmount, setDonationAmount] = useState('');
   const [customAmount, setCustomAmount] = useState('');
   const [donationType, setDonationType] = useState('one-time');
-  const [submitted, setSubmitted] = useState(false);
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvv, setCvv] = useState('');
+  const cardBrand = detectCardBrand(cardNumber);
 
   const presetAmounts = [25, 50, 100, 250, 500, 1000];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Donation submitted:', { amount: donationAmount || customAmount, type: donationType });
-    setSubmitted(true);
-  };
 
   // Mock data for transparency reporting
   const fundAllocation = [
@@ -45,35 +91,6 @@ export default function DonationsPage() {
     { label: 'Projects Funded', value: '24', icon: Award },
     { label: 'Growth Rate', value: '+35%', icon: TrendingUp },
   ];
-
-  if (submitted) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center py-20">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="bg-white rounded-xl shadow-lg p-12">
-            <div className="w-20 h-20 bg-[#22B600] rounded-full flex items-center justify-center mx-auto mb-6">
-              <Heart className="w-12 h-12 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-[#000000] mb-4">
-              Thank You for Your Generous Donation!
-            </h1>
-            <p className="text-lg text-gray-600 mb-6">
-              Your contribution of ${donationAmount || customAmount} will make a significant impact in our communities across Canada.
-            </p>
-            <p className="text-gray-600 mb-8">
-              A receipt has been sent to your email for tax purposes.
-            </p>
-            <button
-              onClick={() => setSubmitted(false)}
-              className="bg-[#22B600] text-white px-8 py-3 rounded-full hover:bg-[#1da000] transition-colors font-semibold"
-            >
-              Make Another Donation
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -112,7 +129,7 @@ export default function DonationsPage() {
             <div className="bg-white rounded-xl shadow-lg p-8">
               <h2 className="text-2xl font-bold text-[#000000] mb-6">Make a Donation</h2>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={(event) => event.preventDefault()} className="space-y-6">
                 {/* Donation Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -213,10 +230,18 @@ export default function DonationsPage() {
                         <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
                           type="text"
-                          required
                           placeholder="1234 5678 9012 3456"
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22B600] focus:border-transparent"
+                          inputMode="numeric"
+                          autoComplete="cc-number"
+                          value={cardNumber}
+                          onChange={(event) => setCardNumber(formatCardNumber(event.target.value))}
+                          className="w-full pl-10 pr-32 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22B600] focus:border-transparent"
                         />
+                        {cardBrand && (
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <CardBrandBadge brand={cardBrand} />
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -226,8 +251,12 @@ export default function DonationsPage() {
                         </label>
                         <input
                           type="text"
-                          required
                           placeholder="MM/YY"
+                          inputMode="numeric"
+                          autoComplete="cc-exp"
+                          value={expiryDate}
+                          onChange={(event) => setExpiryDate(formatExpiry(event.target.value))}
+                          maxLength={5}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22B600] focus:border-transparent"
                         />
                       </div>
@@ -236,9 +265,13 @@ export default function DonationsPage() {
                           CVV
                         </label>
                         <input
-                          type="text"
-                          required
-                          placeholder="123"
+                          type="password"
+                          placeholder="•••"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          value={cvv}
+                          onChange={(event) => setCvv(event.target.value.replace(/\D/g, '').slice(0, 4))}
+                          maxLength={4}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22B600] focus:border-transparent"
                         />
                       </div>
@@ -251,16 +284,18 @@ export default function DonationsPage() {
                   <Lock className="w-5 h-5 text-[#22B600] flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-gray-600">
                     <p className="font-semibold text-[#000000] mb-1">Secure Payment</p>
-                    <p>Your payment information is encrypted and secure. We never store your card details.</p>
+                    <p>This is a payment-form preview. Card details are not submitted or stored while donations are unavailable.</p>
                   </div>
                 </div>
 
                 <button
                   type="submit"
-                  disabled={!donationAmount && !customAmount}
+                  disabled
+                  aria-disabled="true"
+                  title="Online donations are not available yet"
                   className="w-full bg-[#22B600] text-white py-4 rounded-full hover:bg-[#1da000] transition-colors font-semibold text-lg disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
-                  Donate {donationAmount || customAmount ? `$${donationAmount || customAmount}` : ''}
+                  Donations Coming Soon
                 </button>
               </form>
             </div>
