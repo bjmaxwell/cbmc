@@ -443,6 +443,11 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
+    fetch('/api/settings/download-protection')
+      .then((response) => (response.ok ? response.json() : Promise.reject()))
+      .then((setting) => setDownloadProtectionEnabled(setting.enabled !== false))
+      .catch(() => setDownloadProtectionEnabled(true));
+
     fetch('/api/pages')
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then((pages) => {
@@ -770,6 +775,17 @@ export default function AdminDashboard() {
 
     if (!response.ok) throw new Error('Unable to upload media');
     return response.json();
+  };
+
+  const saveSecuritySettings = async () => {
+    const response = await fetch('/api/settings/download-protection', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ enabled: downloadProtectionEnabled }),
+    });
+    if (!response.ok) throw new Error(await getResponseError(response, 'Unable to save security settings'));
+    window.dispatchEvent(new Event('cbmc-download-protection-change'));
+    setContentSaveMessage(`Protection is ${downloadProtectionEnabled ? 'enabled' : 'disabled'} for all public pages.`);
   };
 
   if (passwordChangeRequired && activeUser) {
@@ -1864,10 +1880,10 @@ export default function AdminDashboard() {
                     onChange={() => setAdminPublishingEnabled((value) => !value)}
                   />
                   <p className="text-sm text-gray-600">
-                    Browser-level screenshot blocking cannot be guaranteed by any website, but this app blocks right-click, common save/print shortcuts, and image dragging outside analytics.
+                    Protection blocks browser copying, saving, printing, dragging, and common developer shortcuts; hides content when the page loses visibility; and adds a watermark to captured content. Operating-system and phone screenshots cannot be technically disabled by a website.
                   </p>
                   <button
-                    onClick={() => setContentSaveMessage('Security settings saved in this admin session.')}
+                    onClick={() => saveSecuritySettings().catch((error) => setContentSaveMessage(error.message))}
                     className="inline-flex items-center gap-2 bg-[#1a8000] text-white px-4 py-2 rounded-sm text-sm"
                   >
                     <Save className="w-4 h-4" />

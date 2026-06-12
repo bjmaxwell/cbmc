@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Navigation } from './components/Navigation';
 import { Footer } from './components/Footer';
@@ -35,12 +36,26 @@ export default function App() {
 function AppShell() {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
+  const [downloadProtectionEnabled, setDownloadProtectionEnabled] = useState(true);
+
+  useEffect(() => {
+    const refreshProtection = () => {
+      fetch('/api/settings/download-protection')
+        .then((response) => (response.ok ? response.json() : Promise.reject()))
+        .then((setting) => setDownloadProtectionEnabled(setting.enabled !== false))
+        .catch(() => setDownloadProtectionEnabled(true));
+    };
+
+    refreshProtection();
+    window.addEventListener('cbmc-download-protection-change', refreshProtection);
+    return () => window.removeEventListener('cbmc-download-protection-change', refreshProtection);
+  }, []);
 
   return (
     <PreviewGate>
       <div className="min-h-screen flex flex-col bg-white">
         <ScrollToTop />
-        <DownloadProtection />
+        <DownloadProtection disabledBySuperAdmin={!downloadProtectionEnabled} />
         {!isAdmin && <Navigation />}
         {!isAdmin && <AdminReturnLink />}
         {!isAdmin && <PageBackLink />}

@@ -132,6 +132,24 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === 'GET' && path === '/api/settings/download-protection') {
+      const setting = await prisma.siteSetting.findUnique({ where: { key: 'download-protection' } });
+      send(res, 200, { enabled: setting?.value?.enabled !== false });
+      return;
+    }
+
+    if (req.method === 'PUT' && path === '/api/settings/download-protection') {
+      const body = await readJson(req);
+      const enabled = body.enabled !== false;
+      await prisma.siteSetting.upsert({
+        where: { key: 'download-protection' },
+        update: { value: { enabled } },
+        create: { key: 'download-protection', value: { enabled } },
+      });
+      send(res, 200, { enabled });
+      return;
+    }
+
     if (req.method === 'GET' && path.startsWith('/api/pages/')) {
       const slug = decodeURIComponent(path.replace('/api/pages/', ''));
       const page = await prisma.page.findUnique({
